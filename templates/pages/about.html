@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}About{% endblock %}
+{% block body_class %}page-about{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">About {{ brand_product }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="card">
+    <h2 class="card__title">Build</h2>
+    <dl class="kv">
+      <dt>Product</dt><dd>{{ brand_product }}</dd>
+      <dt>Version</dt><dd>{{ brand_version }}</dd>
+      <dt>Milestone</dt><dd>{{ brand_phase }}</dd>
+      <dt>Mode</dt><dd>Offline &middot; Local only</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="section">
+  <div class="card">
+    <h2 class="card__title">Storage</h2>
+    <dl class="kv">
+      <dt>Documents</dt><dd class="mono">{{ derb_root }}</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="section">
+  <div class="card">
+    <h2 class="card__title">Roadmap</h2>
+    <ul class="roadmap">
+      {% for service in services %}
+      <li class="roadmap__item">
+        <span class="roadmap__icon" style="--tile-accent: {{ service.accent }}">
+          {{ icon(service.icon, 18) }}
+        </span>
+        <span class="roadmap__body">
+          <span class="roadmap__name">{{ service.title }}</span>
+          <span class="roadmap__phase">{{ service.phase or 'Available' }}</span>
+        </span>
+        <span class="pill {% if service.is_ready %}pill--ready{% else %}pill--soon{% endif %}">
+          {% if service.is_ready %}Ready{% else %}Soon{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<div class="actions">
+  <a class="btn btn--ghost" href="{{ url_for('dashboard.health') }}">System health (JSON)</a>
+</div>
+{% endblock %}

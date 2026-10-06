@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ doc.name }}{% endblock %}
+{% block body_class %}page-letter-form{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/letters.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ back_url }}" aria-label="Back to document types">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('letters.index') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ doc.name }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+{% if saved %}
+<div class="notice">
+  {{ icon('check', 18, 'notice__icon') }}
+  <p><strong>Saved.</strong> You can keep editing, preview, or export below.</p>
+</div>
+{% endif %}
+
+<div class="lt-form-head">
+  <span class="lt-form-head__chip" style="--cat-accent: #123a72">{{ category.name }}</span>
+  <h1 class="lt-form-head__title">{{ doc.name }}</h1>
+  <p class="lt-form-head__desc">{{ doc.desc }}</p>
+</div>
+
+{% if legal %}
+<div class="notice notice--amber">
+  {{ icon('info', 18, 'notice__icon') }}
+  <p>This is a formal document template. It is <strong>not legal advice</strong> and does
+     not by itself make the document legally valid &mdash; have it reviewed, stamped or
+     notarised by a lawyer, notary public or the appropriate authority where required.</p>
+</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('letters.preview_form') }}" id="letter-form">
+  <input type="hidden" name="doc" value="{{ doc.slug }}">
+  <input type="hidden" name="project_id" value="{{ project.id if project else '' }}">
+
+  <section class="card">
+    <h2 class="card__title">Choose a design</h2>
+    <div class="lt-templates">
+      {% for t in templates %}
+      <label class="lt-template {% if t.slug == template_slug %}lt-template--active{% endif %}">
+        <input type="radio" name="template_slug" value="{{ t.slug }}"
+               {% if t.slug == template_slug %}checked{% endif %}>
+        <span class="lt-template__dot" style="--t-accent: {{ t.accent }}"></span>
+        <span class="lt-template__body">
+          <span class="lt-template__name">{{ t.name }}</span>
+          <span class="lt-template__desc">{{ t.desc }}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% for inst in instances %}
+  <section class="card">
+    <h2 class="card__title">{{ inst.heading }}</h2>
+    <div class="lt-fields">
+      {% for f in inst.fields %}
+      <div class="lt-field lt-field--{{ 'area' if f.type == 'textarea' else 'line' }}">
+        <label class="label" for="f-{{ f.name }}">{{ f.label }}</label>
+        {% if f.type == 'textarea' %}
+        <textarea class="input" id="f-{{ f.name }}" name="{{ f.name }}" rows="3"
+                  placeholder="{{ f.placeholder }}">{{ fields.get(f.name, '') }}</textarea>
+        {% else %}
+        <input class="input" id="f-{{ f.name }}" name="{{ f.name }}"
+               type="{{ 'date' if f.type == 'date' else ('email' if f.type == 'email' else ('tel' if f.type == 'tel' else 'text')) }}"
+               {% if f.inputmode %}inputmode="{{ f.inputmode }}"{% endif %}
+               value="{{ fields.get(f.name, '') }}"
+               placeholder="{{ f.placeholder }}">
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="actions lt-actions">
+    <a class="btn btn--ghost" href="{{ back_url }}">{{ icon('back', 18) }} Back</a>
+    {% if project %}
+    <a class="btn btn--ghost" href="{{ url_for('letters.preview', letter_id=project.id) }}">
+      {{ icon('document', 18) }} Preview</a>
+    {% endif %}
+    <button class="btn btn--ghost" type="submit"
+            formaction="{{ url_for('letters.save') }}">
+      {{ icon('saved', 18) }} {{ 'Update Saved Document' if project else 'Save' }}
+    </button>
+    <button class="btn btn--primary" type="submit">
+      {{ icon('document', 18) }} Preview Document
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/letters.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

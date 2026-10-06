@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b2545">
+  <meta name="color-scheme" content="light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>{% block title %}{{ brand_product }}{% endblock %} &middot; {{ brand_product }}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/derb-logo.svg') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/derb-logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ asset_version }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <div class="app">
+
+    <header class="appbar">
+      <div class="appbar__inner">
+        {% block appbar_left %}
+          <a class="appbar__brand" href="{{ url_for('dashboard.home') }}">
+            <img class="appbar__logo" src="{{ url_for('static', filename='img/derb-logo.svg') }}"
+                 alt="" width="34" height="34">
+            <span class="appbar__titles">
+              <span class="appbar__company">{{ brand_company }}</span>
+              <span class="appbar__product">{{ brand_product }}</span>
+            </span>
+          </a>
+        {% endblock %}
+        <div class="appbar__actions">
+          {% block appbar_actions %}{% endblock %}
+        </div>
+      </div>
+    </header>
+
+    <main class="app__main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="appfooter">
+      <span>{{ brand_company }}</span>
+      <span class="dot">&middot;</span>
+      <span>{{ brand_product }} v{{ brand_version }}</span>
+      <span class="dot">&middot;</span>
+      <span class="pill pill--offline">Offline</span>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ asset_version }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

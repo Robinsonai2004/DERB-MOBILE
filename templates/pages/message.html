@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ heading }}{% endblock %}
+{% block body_class %}page-message{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ brand_product }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="message">
+  <p class="message__code">{{ code }}</p>
+  <h1 class="message__heading">{{ heading }}</h1>
+  <p class="message__text">{{ message }}</p>
+  <a class="btn btn--primary" href="{{ url_for('dashboard.home') }}">Back to Dashboard</a>
+</section>
+{% endblock %}

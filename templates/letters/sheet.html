@@ -1,0 +1,80 @@
+{# A4 sheet for letters / agreements / declarations. Used by the preview. #}
+<article class="sheet sheet--letter {{ 'sheet--serif' if d.serif else '' }}" style="--accent: {{ d.accent }}">
+  <div class="lt-sheet">
+    <header class="lt-doc__head">
+      <h1 class="lt-doc__title">{{ d.title }}</h1>
+      <div class="lt-doc__rule"></div>
+    </header>
+
+    {% if d.date %}
+    <p class="lt-doc__date">Date: {{ d.date }}</p>
+    {% endif %}
+
+    {% if d.recipient %}
+    <div class="lt-doc__recipient">
+      <p class="lt-doc__to">To:</p>
+      {% for line in d.recipient %}<p>{{ line }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    {% if d.salutation %}
+    <p class="lt-doc__salutation">{{ d.salutation }},</p>
+    {% endif %}
+
+    {% if d.opening %}
+    <p class="lt-doc__para">{{ d.opening }}</p>
+    {% endif %}
+
+    {% for clause in d.clauses %}
+    <section class="lt-doc__clause">
+      <h2 class="lt-doc__clause-title">{{ loop.index }}. {{ clause.heading }}</h2>
+      <dl class="lt-doc__items">
+        {% for label, value in clause['items'] %}
+        <div class="lt-doc__item">
+          <dt>{{ label }}:</dt>
+          <dd>{{ value }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </section>
+    {% endfor %}
+
+    {% if d.closing %}
+    <p class="lt-doc__para lt-doc__closing">{{ d.closing }}</p>
+    {% endif %}
+
+    {% if d.letter_signer %}
+    <div class="lt-doc__sign">
+      <span class="lt-doc__sign-line"></span>
+      <p class="lt-doc__sign-name">{{ d.letter_signer.name }}</p>
+    </div>
+    {% endif %}
+
+    {% for signer in d.signers %}
+    <div class="lt-doc__sign">
+      <span class="lt-doc__sign-line"></span>
+      <p class="lt-doc__sign-name">{{ signer.name }}</p>
+      <p class="lt-doc__sign-role">{{ signer.role }}</p>
+    </div>
+    {% endfor %}
+
+    {% if d.witnesses %}
+    <section class="lt-doc__clause">
+      <h2 class="lt-doc__clause-title">Witnesses</h2>
+      {% for wit in d.witnesses %}
+      <div class="lt-doc__sign">
+        <span class="lt-doc__sign-line"></span>
+        <p class="lt-doc__sign-name">{{ wit.name }}</p>
+        <p class="lt-doc__sign-role">Witness {{ loop.index }}</p>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if d.disclaimer %}
+    <footer class="lt-doc__disclaimer">
+      <p><strong>Note:</strong> {{ d.disclaimer }}</p>
+    </footer>
+    {% endif %}
+  </div>
+</article>

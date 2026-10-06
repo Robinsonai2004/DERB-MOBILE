@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+{% from "partials/cv_fields.html" import field, repeatable_section %}
+
+{% block title %}CV Editor{% endblock %}
+{% block body_class %}page-cv-editor{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cv.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('cv.templates') }}" aria-label="Back to templates">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('cv.templates') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">CV Editor</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block appbar_actions %}
+  {% if project %}
+  <a class="appbar__back" href="{{ url_for('cv.preview', project_id=project.id) }}" aria-label="Preview">
+    {{ icon('document', 20) }}
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if saved %}
+<div class="flash">Project saved. You can keep editing and it will update the same record.</div>
+{% endif %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="editor-head">
+  <div class="editor-head__row">
+    <span class="editor-head__swatch" style="background: {{ template.accent }}">
+      {{ icon('cv', 20) }}
+    </span>
+    <div style="min-width:0">
+      <p class="editor-head__name">{{ cv.personal.full_name or 'New CV' }}</p>
+      <p class="editor-head__meta">
+        {{ template.name }}{% if project %} &middot; saved {{ project.updated_at }}{% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('cv.save') }}" id="cv-form" novalidate>
+  <input type="hidden" name="project_id" value="{{ project.id if project else '' }}">
+  <input type="hidden" name="existing_photo" value="{{ cv.photo or '' }}">
+
+  <section class="form-section">
+    <div class="form-section__head">
+      <span class="form-section__num">&#9733;</span>
+      <span class="form-section__title">Template</span>
+    </div>
+    <div class="form-section__body">
+      <div class="field">
+        <label class="field__label" for="template_slug">Design used for this customer</label>
+        <select class="select" id="template_slug" name="template_slug">
+          {% for tpl in cv_templates %}
+          <option value="{{ tpl.slug }}"{% if tpl.slug == template.slug %} selected{% endif %}>
+            {{ tpl.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  {% set ns = namespace(n = 0) %}
+  {% for section in scalar_sections %}
+    {% set ns.n = ns.n + 1 %}
+    <section class="form-section">
+      <div class="form-section__head">
+        <span class="form-section__num">{{ ns.n }}</span>
+        <span class="form-section__title">{{ section.title }}</span>
+      </div>
+      <div class="form-section__body">
+        {% for f in section.fields %}
+          {{ field(f, cv[section.key].get(f.name, ''), section.key ~ '-') }}
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  {% for section in repeatable_sections %}
+    {% set ns.n = ns.n + 1 %}
+    {{ repeatable_section(section, cv[section.key], ns.n) }}
+  {% endfor %}
+
+  {% set ns.n = ns.n + 1 %}
+  <section class="form-section">
+    <div class="form-section__head">
+      <span class="form-section__num">{{ ns.n }}</span>
+      <span class="form-section__title">Passport Photograph</span>
+      <span class="form-section__count">Optional</span>
+    </div>
+    <div class="form-section__body">
+      <div class="photo-drop">
+        <span class="photo-preview" id="photo-preview">
+          {% if cv.photo %}
+          <img src="{{ url_for('cv.photo', filename=cv.photo) }}" alt="Passport photograph">
+          {% else %}
+          {{ icon('passport', 26) }}
+          {% endif %}
+        </span>
+        <div style="flex:1;min-width:0">
+          <label class="field__label" for="photo">Passport photograph</label>
+          <input class="input" type="file" id="photo" name="photo"
+                 accept="image/*" data-photo-input>
+          <p class="field__hint" style="margin-top:6px">
+            Optional. JPG or PNG, under 6&nbsp;MB. Stored on this phone only.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="editor-bar">
+    <button class="btn btn--ghost" type="submit"
+            formaction="{{ url_for('cv.preview_form') }}" formnovalidate>
+      {{ icon('document', 18) }} Preview CV
+    </button>
+    <button class="btn btn--primary" type="submit"
+            formaction="{{ url_for('cv.save') }}">
+      {{ icon('check', 18) }} Save Project
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cv-editor.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

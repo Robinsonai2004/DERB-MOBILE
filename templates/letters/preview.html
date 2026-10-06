@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Preview{% endblock %}
+{% block body_class %}page-letter-preview{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cv.css') }}?v={{ asset_version }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/letters.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('letters.index') }}" aria-label="Back">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('letters.index') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Document Preview</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="preview-toolbar no-print">
+  <a class="btn btn--ghost" href="{{ url_for('letters.index') }}">{{ icon('back', 18) }} Document types</a>
+  {% if project_id %}
+  <a class="btn btn--ghost" href="{{ url_for('letters.edit', letter_id=project_id) }}">Edit</a>
+  <a class="btn btn--ghost" href="{{ url_for('letters.saved') }}">{{ icon('saved', 18) }} Saved</a>
+  {% endif %}
+  <button class="btn btn--primary" type="button" data-print>
+    {{ icon('pdf', 18) }} Print
+  </button>
+</div>
+
+{% if not project_id %}
+<div class="notice no-print" style="margin-bottom:14px">
+  {{ icon('info', 18, 'notice__icon') }}
+  <p>This is a preview of the information in your form. It has <strong>not been saved yet</strong> &mdash;
+     press <strong>Save Document</strong> to keep it.</p>
+</div>
+{% endif %}
+
+<div class="preview-frame">
+  <div class="preview-stage">
+    <div class="sheet-zoom">{{ sheet | safe }}</div>
+  </div>
+</div>
+
+<div class="actions no-print" style="margin-top:14px">
+  {% if project_id %}
+  <form method="post" action="{{ url_for('letters.export_pdf', letter_id=project_id) }}">
+    <button class="btn btn--primary" type="submit">{{ icon('pdf', 16) }} Export PDF</button>
+  </form>
+  <form method="post" action="{{ url_for('letters.export_docx', letter_id=project_id) }}">
+    <button class="btn btn--ghost" type="submit">{{ icon('docx', 16) }} Export DOCX</button>
+  </form>
+  {% else %}
+  {# Keep the user's entries: the back button re-submits the form data to the editor. #}
+  <form method="post" action="{{ url_for('letters.new') }}" class="lt-carry">
+    <input type="hidden" name="doc" value="{{ doc.slug }}">
+    <input type="hidden" name="template" value="{{ template_slug }}">
+    {% for name, value in fields.items() %}
+    <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    <button class="btn btn--ghost" type="submit">{{ icon('back', 18) }} Back to form (keep my entries)</button>
+  </form>
+  <form method="post" action="{{ url_for('letters.save') }}" class="lt-carry">
+    <input type="hidden" name="doc" value="{{ doc.slug }}">
+    <input type="hidden" name="template_slug" value="{{ template_slug }}">
+    {% for name, value in fields.items() %}
+    <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+    <button class="btn btn--primary" type="submit">{{ icon('saved', 18) }} Save Document</button>
+  </form>
+  {% endif %}
+  <button class="btn btn--primary" type="button" data-print>{{ icon('pdf', 16) }} Print</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/letters.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

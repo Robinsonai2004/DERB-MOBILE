@@ -1,0 +1,123 @@
+{# Modern CV - two-column with a coloured sidebar. #}
+<article class="sheet sheet--modern" style="--accent: {{ accent }}">
+  <aside class="md-side">
+    {% if cv.photo %}
+    <img class="md-photo" src="{{ url_for('cv.photo', filename=cv.photo) }}" alt="">
+    {% else %}
+    <div class="md-monogram">{{ helpers.initials(cv.personal.full_name) }}</div>
+    {% endif %}
+
+    <h2 class="md-side__title">Contact</h2>
+    <ul class="md-side__list">
+      {% for item in helpers.contact_items(cv) %}<li>{{ item }}</li>{% endfor %}
+      {% if cv.personal.date_of_birth %}<li>Born: {{ cv.personal.date_of_birth }}</li>{% endif %}
+      {% if cv.personal.gender %}<li>{{ cv.personal.gender }}</li>{% endif %}
+      {% if cv.personal.nationality %}<li>{{ cv.personal.nationality }}</li>{% endif %}
+    </ul>
+
+    {% if cv.personal.state_of_origin or cv.personal.lga %}
+    <h2 class="md-side__title">Origin</h2>
+    <ul class="md-side__list">
+      {% if cv.personal.state_of_origin %}<li>{{ cv.personal.state_of_origin }} State</li>{% endif %}
+      {% if cv.personal.lga %}<li>{{ cv.personal.lga }} LGA</li>{% endif %}
+    </ul>
+    {% endif %}
+
+    {% if cv.skills %}
+    <h2 class="md-side__title">Skills</h2>
+    <ul class="md-side__dots">
+      {% for s in cv.skills %}<li>{{ s.name }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if cv.languages %}
+    <h2 class="md-side__title">Languages</h2>
+    <ul class="md-side__dots">
+      {% for l in cv.languages %}<li>{{ l.name }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if cv.certifications %}
+    <h2 class="md-side__title">Certifications</h2>
+    <ul class="md-side__dots">
+      {% for c in cv.certifications %}
+      <li>{{ c.name }}{% if c.year %} <span class="md-muted">({{ c.year }})</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </aside>
+
+  <div class="md-main">
+    <header class="md-head">
+      <h1 class="md-name">{{ cv.personal.full_name or 'Your Full Name' }}</h1>
+      {% if cv.personal.professional_title %}
+      <p class="md-role">{{ cv.personal.professional_title }}</p>
+      {% endif %}
+    </header>
+
+    {% if cv.profile.profile %}
+    <section class="md-section">
+      <h2 class="md-title">Profile</h2>
+      <p class="md-text">{{ cv.profile.profile }}</p>
+    </section>
+    {% endif %}
+
+    {% if cv.profile.objective %}
+    <section class="md-section">
+      <h2 class="md-title">Career Objective</h2>
+      <p class="md-text">{{ cv.profile.objective }}</p>
+    </section>
+    {% endif %}
+
+    {% if cv.experience %}
+    <section class="md-section">
+      <h2 class="md-title">Experience</h2>
+      {% for e in cv.experience %}
+      <div class="md-entry">
+        <p class="md-entry__role">{{ e.position or 'Position' }}</p>
+        <p class="md-entry__meta">
+          {{ e.company }}{% if e.company and (e.start_date or e.end_date) %} &middot; {% endif %}{{ helpers.year_range(e.start_date, e.end_date) }}
+        </p>
+        {% set resp = helpers.responsibilities(e.responsibilities) %}
+        {% if resp %}
+        <ul class="md-bullets">
+          {% for r in resp %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if cv.education %}
+    <section class="md-section">
+      <h2 class="md-title">Education</h2>
+      {% for ed in cv.education %}
+      <div class="md-entry">
+        <p class="md-entry__role">{{ ed.qualification }}{% if ed.course %} in {{ ed.course }}{% endif %}</p>
+        <p class="md-entry__meta">
+          {{ ed.institution }}{% if ed.institution and (ed.start_year or ed.end_year) %} &middot; {% endif %}{{ helpers.year_range(ed.start_year, ed.end_year) }}
+        </p>
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if cv.references %}
+    <section class="md-section">
+      <h2 class="md-title">References</h2>
+      <div class="md-refs">
+        {% for r in cv.references %}
+        <div class="md-ref">
+          <p class="md-ref__name">{{ r.name }}</p>
+          <p class="md-ref__line">{{ r.title }}{% if r.title and r.organisation %}, {% endif %}{{ r.organisation }}</p>
+          {% if r.phone %}<p class="md-ref__line">{{ r.phone }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <p class="md-footer">References available on request.</p>
+  </div>
+</article>

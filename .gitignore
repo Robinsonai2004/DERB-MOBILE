@@ -1,0 +1,29 @@
+# DERB MOBILE - runtime artifacts stay on the phone, code goes to git
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local database + uploaded passport photos (real customer data)
+data/derb.db
+data/derb.db-wal
+data/derb.db-shm
+data/photos/*
+!data/photos/.gitkeep
+
+# Generated customer documents (real customer data)
+DERB/CV/Projects/*
+DERB/CV/PDF/*
+DERB/CV/DOCX/*
+DERB/Letters/*
+DERB/Documents/*
+DERB/School/*
+DERB/Business/*
+DERB/Passport/*
+DERB/Templates/*
+!DERB/**/.gitkeep
+
+# OS noise
+.DS_Store
+Thumbs.db

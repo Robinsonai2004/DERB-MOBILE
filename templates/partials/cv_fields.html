@@ -1,0 +1,103 @@
+{#
+  Field macros for the CV editor.
+
+  `entry_fields` is used twice for every repeatable section:
+    * once per existing row (index = 0, 1, 2 ...), and
+    * once inside a <template> with index = "__i__",
+  which JavaScript replaces when the user taps "+ Add another".
+  One definition, so the two can never drift apart.
+#}
+
+{% macro field(f, value='', id_prefix='') %}
+<div class="field">
+  <label class="field__label" for="{{ id_prefix }}{{ f.name }}">
+    {{ f.label }}{% if f.required %} <span class="field__req">*</span>{% endif %}
+  </label>
+  {% if f.type == 'textarea' %}
+  <textarea class="textarea" id="{{ id_prefix }}{{ f.name }}" name="{{ f.name }}"
+            placeholder="{{ f.placeholder or '' }}">{{ value }}</textarea>
+  {% elif f.type == 'select' %}
+  <select class="select" id="{{ id_prefix }}{{ f.name }}" name="{{ f.name }}">
+    {% for opt in f.options %}
+    <option value="{{ opt }}"{% if value == opt %} selected{% endif %}>{{ opt or '— Select —' }}</option>
+    {% endfor %}
+  </select>
+  {% else %}
+  <input class="input" type="{{ f.type }}" id="{{ id_prefix }}{{ f.name }}" name="{{ f.name }}"
+         value="{{ value }}" placeholder="{{ f.placeholder or '' }}"
+         {%- if f.inputmode %} inputmode="{{ f.inputmode }}"{% endif %}>
+  {% endif %}
+</div>
+{% endmacro %}
+
+
+{% macro entry_fields(section, index, row) %}
+{% for f in section.fields %}
+<div class="field">
+  <label class="field__label"
+         for="{{ section.key }}-{{ index }}-{{ f.name }}">{{ f.label }}</label>
+  {% if f.type == 'textarea' %}
+  <textarea class="textarea" id="{{ section.key }}-{{ index }}-{{ f.name }}"
+            name="{{ section.key }}[{{ index }}][{{ f.name }}]"
+            placeholder="{{ f.placeholder or '' }}">{{ row.get(f.name, '') }}</textarea>
+  {% else %}
+  <input class="input" type="{{ f.type }}" id="{{ section.key }}-{{ index }}-{{ f.name }}"
+         name="{{ section.key }}[{{ index }}][{{ f.name }}]" value="{{ row.get(f.name, '') }}"
+         placeholder="{{ f.placeholder or '' }}"
+         {%- if f.inputmode %} inputmode="{{ f.inputmode }}"{% endif %}>
+  {% endif %}
+</div>
+{% endfor %}
+{% endmacro %}
+
+
+{% macro entry_card(section, index, row) %}
+<div class="entry-card" data-entry>
+  <div class="entry-card__head">
+    <span class="entry-card__label">{{ section.title }}
+      {% if index is integer %}{{ index + 1 }}{% else %}__n__{% endif %}</span>
+    <button type="button" class="entry-remove" data-remove>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+      Remove
+    </button>
+  </div>
+  {{ entry_fields(section, index, row) }}
+</div>
+{% endmacro %}
+
+
+{% macro repeatable_section(section, rows, number) %}
+<section class="form-section" data-section-key="{{ section.key }}">
+  <div class="form-section__head">
+    <span class="form-section__num">{{ number }}</span>
+    <span class="form-section__title">{{ section.title }}</span>
+    <span class="form-section__count" data-count>{{ rows|length }}</span>
+  </div>
+  <div class="form-section__body">
+    <div class="entries" data-entries="{{ section.key }}" data-next="{{ rows|length }}">
+      {% for row in rows %}
+        {{ entry_card(section, loop.index0, row) }}
+      {% endfor %}
+    </div>
+
+    <p class="empty-note" data-empty-note{% if rows %} style="display:none"{% endif %}>
+      No {{ section.title|lower }} added yet.
+    </p>
+
+    <button type="button" class="add-btn" data-add="{{ section.key }}">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+      {{ section.add_label }}
+    </button>
+
+    <template data-template="{{ section.key }}">
+      {{ entry_card(section, '__i__', {}) }}
+    </template>
+  </div>
+</section>
+{% endmacro %}

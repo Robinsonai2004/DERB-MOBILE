@@ -1,0 +1,107 @@
+{# Simple CV - deliberately plain, black and white, single column, serif. #}
+<article class="sheet sheet--simple" style="--accent: {{ accent }}">
+  <header class="sm-head">
+    <h1 class="sm-name">{{ cv.personal.full_name or 'Your Full Name' }}</h1>
+    {% if cv.personal.professional_title %}
+    <p class="sm-role">{{ cv.personal.professional_title }}</p>
+    {% endif %}
+    {% if cv.personal.address %}
+    <p class="sm-address">{{ cv.personal.address }}</p>
+    {% endif %}
+    {% set contacts = helpers.contact_items(cv) %}
+    {% if contacts %}
+    <p class="sm-contact">{{ contacts | join(' | ') }}</p>
+    {% endif %}
+  </header>
+
+  {% set bio = helpers.bio_items(cv) %}
+  {% if bio %}
+  <p class="sm-bio">{{ bio | join('  |  ') }}</p>
+  {% endif %}
+
+  {% if cv.profile.profile %}
+  <section class="sm-section">
+    <h2 class="sm-title">Professional Profile</h2>
+    <p class="sm-text">{{ cv.profile.profile }}</p>
+  </section>
+  {% endif %}
+
+  {% if cv.profile.objective %}
+  <section class="sm-section">
+    <h2 class="sm-title">Career Objective</h2>
+    <p class="sm-text">{{ cv.profile.objective }}</p>
+  </section>
+  {% endif %}
+
+  {% if cv.education %}
+  <section class="sm-section">
+    <h2 class="sm-title">Education</h2>
+    {% for ed in cv.education %}
+    <div class="sm-entry">
+      <p class="sm-entry__line">
+        <span class="sm-entry__lead">{{ ed.qualification }}{% if ed.course %} in {{ ed.course }}{% endif %}</span>
+        {% if ed.start_year or ed.end_year %}<span class="sm-entry__meta">{{ helpers.year_range(ed.start_year, ed.end_year) }}</span>{% endif %}
+      </p>
+      {% if ed.institution %}<p class="sm-entry__sub">{{ ed.institution }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if cv.experience %}
+  <section class="sm-section">
+    <h2 class="sm-title">Work Experience</h2>
+    {% for e in cv.experience %}
+    <div class="sm-entry">
+      <p class="sm-entry__line">
+        <span class="sm-entry__lead">{{ e.position or 'Position' }}{% if e.company %}, {{ e.company }}{% endif %}</span>
+        {% if e.start_date or e.end_date %}<span class="sm-entry__meta">{{ helpers.year_range(e.start_date, e.end_date) }}</span>{% endif %}
+      </p>
+      {% set resp = helpers.responsibilities(e.responsibilities) %}
+      {% if resp %}
+      <ul class="sm-bullets">
+        {% for r in resp %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if cv.skills %}
+  <section class="sm-section">
+    <h2 class="sm-title">Skills</h2>
+    <p class="sm-text">{{ cv.skills | map(attribute='name') | select | join(', ') }}</p>
+  </section>
+  {% endif %}
+
+  {% if cv.certifications %}
+  <section class="sm-section">
+    <h2 class="sm-title">Certifications</h2>
+    <ul class="sm-bullets">
+      {% for c in cv.certifications %}
+      <li>{{ c.name }}{% if c.issuer %} &mdash; {{ c.issuer }}{% endif %}{% if c.year %} ({{ c.year }}){% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if cv.languages %}
+  <section class="sm-section">
+    <h2 class="sm-title">Languages</h2>
+    <p class="sm-text">{{ cv.languages | map(attribute='name') | select | join(', ') }}</p>
+  </section>
+  {% endif %}
+
+  {% if cv.references %}
+  <section class="sm-section">
+    <h2 class="sm-title">References</h2>
+    {% for r in cv.references %}
+    <p class="sm-text sm-ref">
+      <strong>{{ r.name }}</strong>{% if r.title %}, {{ r.title }}{% endif %}{% if r.organisation %}, {{ r.organisation }}{% endif %}
+      {% if r.phone %}<br>{{ r.phone }}{% endif %}{% if r.email %}{% if r.phone %} &middot; {% endif %}{{ r.email }}{% endif %}
+    </p>
+    {% endfor %}
+  </section>
+  {% endif %}
+</article>

@@ -1,0 +1,10 @@
+# DERB MOBILE - runtime dependencies
+#
+# Deliberately minimal: Flask plus its pure-Python dependencies (Werkzeug,
+# Jinja2, MarkupSafe, itsdangerous, click, blinker).
+#
+# PDF and DOCX export are implemented with the Python standard library only
+# (see docs/DECISIONS.md). Native packages such as Pillow, lxml, cairo and
+# ReportLab do NOT build on this Termux toolchain, so they are intentionally
+# not required - the app must work offline with zero build steps.
+Flask>=3.0,<4.0

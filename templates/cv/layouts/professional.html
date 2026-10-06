@@ -1,0 +1,131 @@
+{# Professional CV - formal navy header band, ruled section headings. #}
+<article class="sheet sheet--professional" style="--accent: {{ accent }}">
+  <header class="pf-head">
+    {% if cv.photo %}
+    <img class="pf-photo" src="{{ url_for('cv.photo', filename=cv.photo) }}" alt="">
+    {% endif %}
+    <div class="pf-head__text">
+      <h1 class="pf-name">{{ cv.personal.full_name or 'Your Full Name' }}</h1>
+      {% if cv.personal.professional_title %}
+      <p class="pf-role">{{ cv.personal.professional_title }}</p>
+      {% endif %}
+      {% set contacts = helpers.contact_items(cv) %}
+      {% if contacts %}
+      <ul class="pf-contact">
+        {% for item in contacts %}<li>{{ item }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </header>
+
+  {% set bio = helpers.bio_items(cv) %}
+  {% if bio %}
+  <ul class="pf-bio">
+    {% for item in bio %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if cv.profile.profile or cv.profile.objective %}
+  <section class="pf-section">
+    {% if cv.profile.profile %}
+    <h2 class="pf-title">Professional Profile</h2>
+    <p class="pf-text">{{ cv.profile.profile }}</p>
+    {% endif %}
+    {% if cv.profile.objective %}
+    <h2 class="pf-title">Career Objective</h2>
+    <p class="pf-text">{{ cv.profile.objective }}</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if cv.experience %}
+  <section class="pf-section">
+    <h2 class="pf-title">Work Experience</h2>
+    {% for e in cv.experience %}
+    <div class="pf-entry">
+      <div class="pf-entry__head">
+        <p class="pf-entry__title">{{ e.position or 'Position' }}</p>
+        {% if e.start_date or e.end_date %}
+        <p class="pf-entry__meta">{{ helpers.year_range(e.start_date, e.end_date) }}</p>
+        {% endif %}
+      </div>
+      {% if e.company %}<p class="pf-entry__org">{{ e.company }}</p>{% endif %}
+      {% set resp = helpers.responsibilities(e.responsibilities) %}
+      {% if resp %}
+      <ul class="pf-bullets">
+        {% for r in resp %}<li>{{ r }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if cv.education %}
+  <section class="pf-section">
+    <h2 class="pf-title">Education</h2>
+    {% for ed in cv.education %}
+    <div class="pf-entry">
+      <div class="pf-entry__head">
+        <p class="pf-entry__title">
+          {{ ed.qualification }}{% if ed.qualification and ed.course %} &mdash; {% endif %}{{ ed.course }}
+        </p>
+        {% if ed.start_year or ed.end_year %}
+        <p class="pf-entry__meta">{{ helpers.year_range(ed.start_year, ed.end_year) }}</p>
+        {% endif %}
+      </div>
+      {% if ed.institution %}<p class="pf-entry__org">{{ ed.institution }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if cv.skills %}
+  <section class="pf-section">
+    <h2 class="pf-title">Skills</h2>
+    <ul class="pf-chips">
+      {% for s in cv.skills %}<li class="pf-chip">{{ s.name }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if cv.certifications %}
+  <section class="pf-section">
+    <h2 class="pf-title">Certifications</h2>
+    <ul class="pf-list">
+      {% for c in cv.certifications %}
+      <li>
+        <span class="pf-list__strong">{{ c.name }}</span>
+        {% if c.issuer %}<span class="pf-list__muted"> &mdash; {{ c.issuer }}</span>{% endif %}
+        {% if c.year %}<span class="pf-list__muted"> ({{ c.year }})</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if cv.languages %}
+  <section class="pf-section">
+    <h2 class="pf-title">Languages</h2>
+    <ul class="pf-chips">
+      {% for l in cv.languages %}<li class="pf-chip">{{ l.name }}</li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if cv.references %}
+  <section class="pf-section">
+    <h2 class="pf-title">References</h2>
+    <div class="pf-refs">
+      {% for r in cv.references %}
+      <div class="pf-ref">
+        <p class="pf-ref__name">{{ r.name }}</p>
+        <p class="pf-ref__line">{{ r.title }}{% if r.title and r.organisation %}, {% endif %}{{ r.organisation }}</p>
+        {% if r.phone %}<p class="pf-ref__line">{{ r.phone }}</p>{% endif %}
+        {% if r.email %}<p class="pf-ref__line">{{ r.email }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</article>

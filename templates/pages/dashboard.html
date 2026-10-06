@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Dashboard{% endblock %}
+{% block body_class %}page-dashboard{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero__brand">
+    <img class="hero__logo" src="{{ url_for('static', filename='img/derb-logo.svg') }}"
+         alt="DERB Finance Concepts" width="52" height="52">
+    <div class="hero__names">
+      <p class="hero__company">{{ brand_company }}</p>
+      <h1 class="hero__product">{{ brand_product }}</h1>
+      <p class="hero__tagline">{{ brand_tagline }}</p>
+    </div>
+  </div>
+
+  <div class="hero__stats">
+    <a class="stat" href="{{ url_for('saved.index') }}">
+      <span class="stat__value">{{ stats.projects }}</span>
+      <span class="stat__label">Saved Projects</span>
+    </a>
+    <a class="stat" href="{{ url_for('services.templates') }}">
+      <span class="stat__value">{{ stats.templates }}</span>
+      <span class="stat__label">Templates</span>
+    </a>
+    <div class="stat stat--static">
+      <span class="stat__value">A4</span>
+      <span class="stat__label">Print Ready</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">Services</h2>
+    <span class="section__meta">Tap to open</span>
+  </div>
+
+  <div class="tiles">
+    {% for service in services %}
+    <a class="tile {% if not service.is_ready %}tile--soon{% endif %}"
+       href="{{ url_for(service.route) }}"
+       style="--tile-accent: {{ service.accent }}">
+      <span class="tile__icon">{{ icon(service.icon, 26) }}</span>
+      <span class="tile__body">
+        <span class="tile__title">{{ service.title }}</span>
+        <span class="tile__subtitle">{{ service.subtitle }}</span>
+      </span>
+      <span class="tile__badge {% if service.is_ready %}tile__badge--ready{% endif %}">
+        {% if service.is_ready %}Ready{% else %}Soon{% endif %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if recent %}
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">Recent Work</h2>
+    <a class="section__link" href="{{ url_for('saved.index') }}">View all</a>
+  </div>
+  <ul class="recent">
+    {% for item in recent %}
+    <li class="recent__item">
+      <span class="recent__icon">{{ icon('cv', 20) }}</span>
+      <span class="recent__body">
+        <span class="recent__name">{{ item.customer_name or item.title or 'Untitled' }}</span>
+        <span class="recent__meta">{{ item.doc_type }} &middot; {{ item.updated_at }}</span>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="notice">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      <strong>CV / Resume and Letters &amp; Documents are live.</strong>
+      Build, preview and export CVs, or create letters, agreements and official
+      documents from {{ letters_count }} ready document types &mdash; all offline,
+      with PDF and DOCX export.
+    </p>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Preview{% endblock %}
+{% block body_class %}page-cv-preview{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cv.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ back_url }}" aria-label="Back">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('cv.templates') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">CV Preview</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="preview-toolbar no-print">
+  <a class="btn btn--ghost" href="{{ back_url }}">{{ icon('back', 18) }} Back</a>
+  {% if project_id %}
+  <a class="btn btn--ghost" href="{{ url_for('saved.index') }}">{{ icon('saved', 18) }} Saved Work</a>
+  {% endif %}
+  <button class="btn btn--primary" type="button" data-print>
+    {{ icon('pdf', 18) }} Print / Save as PDF
+  </button>
+</div>
+
+{% if not project_id %}
+<div class="notice no-print" style="margin-bottom:14px">
+  {{ icon('info', 18, 'notice__icon') }}
+  <p>This is a preview of the data in your editor. It has <strong>not been saved yet</strong> —
+     tap Back and press <strong>Save Project</strong> to keep it.</p>
+</div>
+{% endif %}
+
+<div class="preview-frame">
+  <div class="preview-stage">
+    <div class="sheet-zoom">{{ sheet | safe }}</div>
+  </div>
+</div>
+
+<div class="actions no-print" style="margin-top:14px">
+  <button class="btn btn--primary" type="button" data-print>Print / Save as PDF</button>
+  <a class="btn btn--ghost" href="{{ back_url }}">Back to Editor</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cv-editor.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

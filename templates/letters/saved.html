@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Saved Letters{% endblock %}
+{% block body_class %}page-letters-saved{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/letters.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('letters.index') }}" aria-label="Back to document types">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('letters.index') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Saved Letters</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<form class="search-bar" method="get" action="{{ url_for('letters.saved') }}">
+  <input class="input" type="search" name="q" value="{{ query }}"
+         placeholder="Search saved letters by name or title" autocomplete="off">
+  <button class="btn btn--primary" type="submit">{{ icon('search', 18) }}</button>
+</form>
+
+<p class="section__meta" style="margin:0 2px 12px">
+  {% if query %}
+    {{ items|length }} result{{ '' if items|length == 1 else 's' }} for &ldquo;{{ query }}&rdquo;
+  {% else %}
+    {{ total }} saved document{{ '' if total == 1 else 's' }}
+  {% endif %}
+</p>
+
+{% for item in items %}
+<article class="saved-item">
+  <div class="saved-item__top">
+    <span class="saved-item__avatar" style="background: {{ item.template.accent }}">
+      {{ icon('letter', 20) }}
+    </span>
+    <div style="min-width:0;flex:1">
+      <p class="saved-item__name">{{ item.doc_name }}</p>
+      <p class="saved-item__meta">
+        {{ item.category }}{% if item.parties %} &middot; {{ item.parties }}{% endif %}
+        &middot; {{ item.template.name }}
+      </p>
+    </div>
+  </div>
+
+  <div class="saved-item__stats">
+    <span class="saved-tag">Created {{ item.project.created_at }}</span>
+    <span class="saved-tag">Modified {{ item.project.updated_at }}</span>
+  </div>
+
+  <div class="saved-item__actions">
+    <a class="btn btn--primary" href="{{ url_for('letters.edit', letter_id=item.project.id) }}">Open / Edit</a>
+    <a class="btn btn--ghost" href="{{ url_for('letters.preview', letter_id=item.project.id) }}">Preview</a>
+    <form method="post" action="{{ url_for('letters.duplicate', letter_id=item.project.id) }}">
+      <button class="btn btn--ghost" type="submit">Duplicate</button>
+    </form>
+    <form method="post" action="{{ url_for('letters.export_pdf', letter_id=item.project.id) }}">
+      <button class="btn btn--ghost" type="submit">{{ icon('pdf', 16) }} Export PDF</button>
+    </form>
+    <form method="post" action="{{ url_for('letters.export_docx', letter_id=item.project.id) }}">
+      <button class="btn btn--ghost" type="submit">{{ icon('docx', 16) }} Export DOCX</button>
+    </form>
+    <form method="post" action="{{ url_for('letters.delete', letter_id=item.project.id) }}"
+          onsubmit="return confirm('Delete this document? This cannot be undone.');">
+      <button class="btn btn--danger" type="submit">Delete</button>
+    </form>
+  </div>
+</article>
+{% else %}
+  <div class="notice {% if query %}{% else %}notice--amber{% endif %}">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      {% if query %}
+        No saved documents match &ldquo;{{ query }}&rdquo;. Try a different word.
+      {% else %}
+        No saved letters yet. Open <strong>Letters</strong>, choose a document type
+        and press <strong>Save</strong>.
+      {% endif %}
+    </p>
+  </div>
+  {% if not query %}
+  <div class="actions" style="margin-top:14px">
+    <a class="btn btn--primary" href="{{ url_for('letters.index') }}">Create a document</a>
+  </div>
+  {% endif %}
+{% endfor %}
+{% endblock %}

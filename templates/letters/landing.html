@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Letters & Documents{% endblock %}
+{% block body_class %}page-letters{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/letters.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Letters &amp; Documents</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="lt-hero">
+  <h1 class="lt-hero__title">Create a Letter or Document</h1>
+  <p class="lt-hero__sub">Choose the type of document you want to create.</p>
+
+  <form class="lt-search" method="get" action="{{ url_for('letters.index') }}" role="search">
+    {{ icon('search', 18, 'lt-search__icon') }}
+    <input class="lt-search__input" type="search" name="q" id="letter-search"
+           value="{{ query }}" placeholder="Search letters and documents..."
+           autocomplete="off" aria-label="Search letters and documents">
+    <button class="lt-search__clear" type="button" id="letter-search-clear"
+            aria-label="Clear search" {% if not query %}hidden{% endif %}>&times;</button>
+  </form>
+
+  <p class="lt-hero__meta">
+    {{ total_types }} document types &middot; search "bike", "ownership", "job", "payment"&hellip;
+    {% if letters_count %}
+    &middot; <a class="lt-hero__link" href="{{ url_for('letters.saved') }}">{{ letters_count }} saved</a>
+    {% endif %}
+  </p>
+</section>
+
+<div class="lt-noresults" id="letter-noresults" hidden>
+  {{ icon('info', 18, 'notice__icon') }}
+  <p>No documents match your search. Try a different word like "agreement", "letter" or "transfer".</p>
+</div>
+
+{% for entry in categories %}
+<section class="lt-category" data-category="{{ entry.cat.slug }}">
+  <div class="lt-category__head">
+    <span class="lt-category__icon" style="--cat-accent: {{ entry.cat.accent if entry.cat.accent else '#123a72' }}">
+      {{ icon(entry.cat.icon, 20) }}
+    </span>
+    <div>
+      <h2 class="lt-category__title">{{ entry.cat.name }}</h2>
+      <p class="lt-category__blurb">{{ entry.cat.blurb }}</p>
+    </div>
+  </div>
+
+  {% set visible = entry.docs if entry.docs|length <= 6 else entry.docs[:6] %}
+  {% set rest = entry.docs[6:] if entry.docs|length > 6 else [] %}
+  <div class="lt-grid">
+    {% for doc in visible %}
+    <article class="lt-card" data-search="{{ (doc.name ~ ' ' ~ doc.desc ~ ' ' ~ doc.keywords ~ ' ' ~ entry.cat.name) | lower }}">
+      <span class="lt-card__icon">{{ icon(entry.cat.icon, 20) }}</span>
+      <div class="lt-card__body">
+        <h3 class="lt-card__name">{{ doc.name }}</h3>
+        <p class="lt-card__desc">{{ doc.desc }}</p>
+      </div>
+      <a class="btn btn--primary lt-card__cta"
+         href="{{ url_for('letters.new', doc=doc.slug) }}">Create</a>
+    </article>
+    {% endfor %}
+  </div>
+
+  {% if rest %}
+  <details class="lt-more" {% if entry.expanded %}open{% endif %} data-more>
+    <summary class="lt-more__summary">View all {{ entry.docs|length }} document types</summary>
+    <div class="lt-grid">
+      {% for doc in rest %}
+      <article class="lt-card" data-search="{{ (doc.name ~ ' ' ~ doc.desc ~ ' ' ~ doc.keywords ~ ' ' ~ entry.cat.name) | lower }}">
+        <span class="lt-card__icon">{{ icon(entry.cat.icon, 20) }}</span>
+        <div class="lt-card__body">
+          <h3 class="lt-card__name">{{ doc.name }}</h3>
+          <p class="lt-card__desc">{{ doc.desc }}</p>
+        </div>
+        <a class="btn btn--primary lt-card__cta"
+           href="{{ url_for('letters.new', doc=doc.slug) }}">Create</a>
+      </article>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+</section>
+{% endfor %}
+
+<section class="section" style="margin-top:6px">
+  <div class="actions">
+    <a class="btn btn--ghost" href="{{ url_for('letters.saved') }}">
+      {{ icon('saved', 18) }} Saved Letters
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/letters.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

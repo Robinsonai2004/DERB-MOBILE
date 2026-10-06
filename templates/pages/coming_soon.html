@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ service.title }}{% endblock %}
+{% block body_class %}page-service{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ service.title }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="service-hero" style="--tile-accent: {{ service.accent }}">
+  <span class="service-hero__icon">{{ icon(service.icon, 40) }}</span>
+  <h1 class="service-hero__title">{{ service.title }}</h1>
+  <p class="service-hero__subtitle">{{ service.subtitle }}</p>
+  <span class="pill pill--soon">Coming Soon</span>
+</section>
+
+<section class="section">
+  <div class="notice notice--amber">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      <strong>{{ service.title }}</strong> is scheduled for <strong>{{ service.phase }}</strong>.
+      It is intentionally left as a placeholder so the CV workflow can be finished
+      and tested first &mdash; exactly as you requested.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section__head"><h2 class="section__title">Available now</h2></div>
+  <div class="tiles tiles--compact">
+    <a class="tile" href="{{ url_for('cv.templates') }}" style="--tile-accent:#123a72">
+      <span class="tile__icon">{{ icon('cv', 24) }}</span>
+      <span class="tile__body"><span class="tile__title">CV / Resume</span></span>
+    </a>
+    <a class="tile" href="{{ url_for('saved.index') }}" style="--tile-accent:#0f766e">
+      <span class="tile__icon">{{ icon('saved', 24) }}</span>
+      <span class="tile__body"><span class="tile__title">Saved Work</span></span>
+    </a>
+    <a class="tile" href="{{ url_for('services.templates') }}" style="--tile-accent:#ca8a04">
+      <span class="tile__icon">{{ icon('templates', 24) }}</span>
+      <span class="tile__body"><span class="tile__title">Templates</span></span>
+    </a>
+  </div>
+</section>
+{% endblock %}

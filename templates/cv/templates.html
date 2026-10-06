@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}CV Templates{% endblock %}
+{% block body_class %}page-cv-templates{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/cv.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">CV / Resume</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block appbar_actions %}
+  <a class="appbar__back" href="{{ url_for('saved.index') }}" aria-label="Saved work">
+    {{ icon('saved', 20) }}
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="service-hero" style="--tile-accent: #123a72">
+  <span class="service-hero__icon">{{ icon('cv', 40) }}</span>
+  <h1 class="service-hero__title">Choose a CV Template</h1>
+  <p class="service-hero__subtitle">
+    Pick a design, then enter the customer's details. The same information works
+    with every template, so you can switch later without retyping.
+  </p>
+</section>
+
+<div class="notice" style="margin-bottom:16px">
+  {{ icon('info', 18, 'notice__icon') }}
+  <p><strong>{{ cards|length }} templates</strong> available &middot;
+     {{ project_count }} saved CV{{ '' if project_count == 1 else 's' }} in Saved Work.</p>
+</div>
+
+<div class="tpl-grid">
+  {% for card in cards %}
+  <article class="tpl-card">
+    <div class="tpl-thumb">
+      {% if card.is_default %}<span class="tpl-thumb__badge">Default</span>{% endif %}
+      <div class="tpl-thumb__inner">{{ card.sheet | safe }}</div>
+    </div>
+    <div class="tpl-body">
+      <h2 class="tpl-name">{{ card.template.name }}</h2>
+      <p class="tpl-desc">{{ card.template.description }}</p>
+      <div class="tpl-actions">
+        <a class="btn btn--primary"
+           href="{{ url_for('cv.new', template=card.template.slug) }}">
+          Use Template
+        </a>
+      </div>
+    </div>
+  </article>
+  {% else %}
+  <div class="notice notice--amber">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>No CV templates found. Run the app once to seed the built-in templates.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="actions" style="margin-top:16px">
+  <a class="btn btn--ghost" href="{{ url_for('saved.index') }}">
+    {{ icon('saved', 18) }} View Saved Work
+  </a>
+</div>
+{% endblock %}

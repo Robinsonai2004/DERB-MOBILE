@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ service.title }}{% endblock %}
+{% block body_class %}page-service{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ service.title }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="service-hero" style="--tile-accent: {{ service.accent }}">
+  <span class="service-hero__icon">{{ icon(service.icon, 40) }}</span>
+  <h1 class="service-hero__title">{{ service.title }}</h1>
+  <p class="service-hero__subtitle">{{ service.subtitle }}</p>
+  <span class="pill pill--ready">Ready</span>
+</section>
+
+<section class="section">
+  <div class="notice">
+    {{ icon('check', 18, 'notice__icon') }}
+    <p>
+      Routing, the local database and the document folder for
+      <strong>{{ service.title }}</strong> are in place. This screen becomes fully
+      interactive in <strong>{{ service.phase }}</strong>.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="card">
+    <h2 class="card__title">What is wired up already</h2>
+    <ul class="checklist">
+      <li>{{ icon('check', 18) }} Local SQLite database created</li>
+      <li>{{ icon('check', 18) }} Document folders created under <code>DERB/</code></li>
+      <li>{{ icon('check', 18) }} Template registry seeded with 3 CV templates</li>
+      <li>{{ icon('check', 18) }} Safe filename generator ready</li>
+    </ul>
+  </div>
+</section>
+
+<div class="actions">
+  <a class="btn btn--primary" href="{{ url_for('dashboard.home') }}">Back to Dashboard</a>
+</div>
+{% endblock %}
