@@ -116,6 +116,17 @@ SERVICES: tuple[Service, ...] = (
         accent="#475569",
         phase="Phase 16",
     ),
+    Service(
+        slug="official_services",
+        title="Official Services",
+        subtitle="Government & Nigeria Police services via DERB",
+        icon="shield",
+        accent="#0b2545",
+        status="ready",
+        phase="Verified portal links",
+        endpoint="services.official_services",
+        tags=("Assist", "External links"),
+    ),
 )
 
 SERVICES_BY_SLUG = {s.slug: s for s in SERVICES}

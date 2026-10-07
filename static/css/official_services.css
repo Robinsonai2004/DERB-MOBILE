@@ -1,0 +1,222 @@
+/* ==========================================================================
+   Official Services page
+   Kept in its own file so app.css stays untouched. Like the rest of the app it
+   references no external font, image or CDN - avatars are plain CSS text.
+   ========================================================================== */
+
+/* ------------------------------------------------------------ search bar */
+.search {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 13px;
+  box-shadow: var(--shadow-sm);
+}
+
+.search__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.search__field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.search__icon { color: var(--muted); flex: none; }
+
+.search__input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  min-width: 0;
+}
+
+.search__input::placeholder { color: var(--muted); }
+
+/* ------------------------------------------------------------ service grid */
+.services {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 420px) {
+  .services { grid-template-columns: 1fr 1fr; }
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent, var(--navy-700));
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+
+.service-card:active {
+  transform: scale(.99);
+  box-shadow: none;
+  background: var(--surface-2);
+}
+
+.service-card__head {
+  display: flex;
+  gap: 12px;
+  padding: 13px 12px 12px;
+  align-items: flex-start;
+}
+
+/* Offline avatar: initials in the service accent colour. No image request. */
+.service-card__avatar {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: var(--accent, var(--navy-700));
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+.service-card__meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.service-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  margin-bottom: 3px;
+}
+
+.service-card__desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.service-card__note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0 12px 11px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.service-card__note-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--muted);
+}
+
+.service-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.service-card__actions .btn {
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 0 12px;
+  min-height: 44px;
+}
+
+.service-card__web {
+  color: var(--navy-700);
+  border-color: var(--line);
+}
+
+/* Shown instead of a link when a service has no verified portal page yet. */
+.service-card__actions .is-disabled {
+  color: var(--muted);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------ assist block */
+.assist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--navy-700);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 14px;
+}
+
+.assist__text { flex: 1; min-width: 220px; }
+
+.assist__title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--navy-900);
+  margin-bottom: 6px;
+}
+
+.assist__body {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.assist__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
+  font-size: 13.5px;
+  border-radius: var(--radius-sm);
+}
+
+/* ------------------------------------------------- presentational / states */
+/* The live filter toggles [hidden]; keep our flex/grid layouts from winning. */
+.service-card[hidden],
+.services[hidden],
+.section[hidden],
+#os-empty[hidden],
+.notice[hidden] {
+  display: none !important;
+}

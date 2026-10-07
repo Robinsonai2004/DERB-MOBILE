@@ -29,7 +29,7 @@ BRAND_COMPANY = "DERB FINANCE CONCEPTS"
 BRAND_PRODUCT = "DERB MOBILE"
 BRAND_TAGLINE = "Offline Document Studio"
 BRAND_VERSION = "1.0.0"
-BRAND_PHASE = "Phase 5 - Letters & Documents"
+BRAND_PHASE = "Phase 6 - Official Services"
 
 # --------------------------------------------------------------------------
 # Server
@@ -43,3 +43,9 @@ ASSET_VERSION = os.environ.get("DERB_ASSET_VERSION", BRAND_VERSION)
 
 # Maximum upload size for passport photographs (kept small for low-spec phones).
 MAX_CONTENT_LENGTH = 6 * 1024 * 1024  # 6 MB
+
+# NOTE: the Official Services catalog (names, descriptions and the verified
+# police/government portal links) lives in core/official_services.py - not
+# here - because it is content, not configuration. Card avatars are generated
+# offline from the service name, so this app still makes no network request
+# of its own.

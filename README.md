@@ -12,11 +12,12 @@ them to a local folder you can transfer to a PC for printing.
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
 | 1 | Project structure (Flask + SQLite + document tree) | **Done** |
-| 2 | Mobile dashboard with DERB branding and 9 services | **Done** |
+| 2 | Mobile dashboard with DERB branding and 10 services | **Done** |
 | 3 | CV template system + CV editor + live A4 preview + Saved Work | **Done** |
 | 4 | PDF & DOCX export (standard-library writers) | **Done** |
 | 5 | Letters & Documents: 86 document types, 7 categories, dynamic forms, Saved Letters | **Done** |
-| 6 | Template Manager + remaining services (Documents, School, Business, Passport) | Next |
+| 6 | Official Services: verified police/government portal links + live search | **Done** |
+| 7 | Template Manager + remaining services (Documents, School, Business, Passport) | Next |
 
 > Version 1 targets the CV / Resume workflow. Letters, Documents, School,
 > Business and Passport Photos are visible on the dashboard and clearly marked
@@ -77,10 +78,11 @@ Stop the server with `CTRL+C` in Termux.
 
 ```bash
 cd ~/DERB-Mobile
-python scripts/smoke_test.py        # 39 checks - foundation & dashboard
-python scripts/test_cv_workflow.py  # 64 checks - template picker/editor/save
-python scripts/test_exports.py      # 29 checks - CV PDF & DOCX export
-python scripts/test_letters.py      # 154 checks - letters & documents module
+python scripts/smoke_test.py             # 41 checks - foundation & dashboard
+python scripts/test_cv_workflow.py       # 64 checks - template picker/editor/save
+python scripts/test_exports.py           # 29 checks - CV PDF & DOCX export
+python scripts/test_letters.py           # 154 checks - letters & documents module
+python scripts/test_official_services.py # 91 checks - official services page
 ```
 
 The export test walks the real workflow: create project, export PDF and DOCX
@@ -101,13 +103,14 @@ DERB-Mobile/
 ├── core/
 │   ├── paths.py            # document tree + safe filenames
 │   ├── db.py               # SQLite schema + built-in templates
-│   ├── registry.py         # the 9 services (dashboard is generated from this)
+│   ├── registry.py         # the 10 services (dashboard is generated from this)
+│   ├── official_services.py # verified police/gov portal catalog (Phase 6)
 │   ├── templates_repo.py   # template queries + default-template setting
 │   └── projects_repo.py    # saved-project queries
 ├── web/
 │   ├── __init__.py         # Flask app factory, error pages
 │   ├── dashboard.py        # home screen, /about, /health
-│   └── services.py         # routes for all 9 services
+│   └── services.py         # routes for all services, incl. /official-services
 ├── templates/              # Jinja screens
 │   ├── base.html
 │   ├── partials/icons.html # inline SVG icon macro
@@ -129,6 +132,21 @@ DERB-Mobile/
 2. Add a short route in `web/services.py`.
 
 The dashboard, badges and About roadmap update themselves. No redesign needed.
+
+## Adding a new official service later
+
+1. Add one entry to `OFFICIAL_SERVICES` in `core/official_services.py`.
+
+It appears on `/official-services`, in the search filter and in the tests. Two
+rules apply, because these cards point at government websites:
+
+* **Only link a page you have opened and seen the service on.** If a service has
+  no dedicated page, link the official index and say so in `portal_note` - the
+  card then tells the customer that instead of pretending a page exists.
+* **Never invent a URL pattern.** A service with no verified link yet keeps
+  `portal_url=""` and shows the "link pending verification" state.
+
+Update `VERIFIED_ON` whenever you re-check the links.
 
 ## Adding a new letter / document type later
 

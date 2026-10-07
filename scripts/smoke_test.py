@@ -79,7 +79,7 @@ def main() -> int:
 
     routes = ["/", "/about", "/health", "/cv", "/letters", "/documents",
               "/school", "/business", "/passport", "/saved", "/templates",
-              "/settings"]
+              "/settings", "/official-services"]
     for route in routes:
         resp = client.get(route)
         check(f"GET {route} -> 200", resp.status_code == 200,
@@ -90,7 +90,7 @@ def main() -> int:
     check("Dashboard shows product name", "DERB MOBILE" in home)
     for title in ("CV / Resume", "Letters", "Documents", "School Documents",
                   "Business Documents", "Passport Photos", "Saved Work",
-                  "Templates", "Settings"):
+                  "Templates", "Settings", "Official Services"):
         check(f"Dashboard tile: {title}", title in home)
 
     health = client.get("/health").get_json()

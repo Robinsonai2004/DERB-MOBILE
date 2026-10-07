@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Official Services{% endblock %}
+{% block body_class %}page-official-services{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/official_services.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Official Services</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+<section class="service-hero" style="--tile-accent:#0b2545">
+  <span class="service-hero__icon">{{ icon('shield', 42) }}</span>
+  <h1 class="service-hero__title">Official Services</h1>
+  <p class="service-hero__subtitle">Government and Nigeria Police services DERB assists customers with</p>
+</section>
+
+<section class="section">
+  <div class="search" role="search">
+    <label class="search__label" for="os-search">Search official service...</label>
+    <div class="search__field">
+      {{ icon('search', 18, 'search__icon') }}
+      <input
+        id="os-search"
+        class="search__input"
+        type="search"
+        placeholder="Search official service..."
+        autocomplete="off"
+        aria-controls="os-featured-list os-all-list"
+        aria-label="Search official services"
+      >
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="featured-title" data-service-section="featured">
+  <div class="section__head">
+    <h2 class="section__title" id="featured-title">Featured services</h2>
+    <span class="section__meta">Popular</span>
+  </div>
+  <div class="services" id="os-featured-list" data-service-list>
+    {% for service in featured_services %}{% include "partials/service_card.html" %}{% endfor %}
+  </div>
+</section>
+
+<section class="section" aria-labelledby="all-title">
+  <div class="section__head">
+    <h2 class="section__title" id="all-title">All official services</h2>
+    <span class="section__meta">{{ all_services|length }} services</span>
+  </div>
+  <div class="services" id="os-all-list" data-service-list>
+    {% for service in all_services %}{% include "partials/service_card.html" %}{% endfor %}
+  </div>
+</section>
+
+<div class="section" id="os-empty" hidden>
+  <div class="notice">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>No official service matches that search. Try a shorter word &mdash; for
+      example <strong>tint</strong>, <strong>certificate</strong> or
+      <strong>vehicle</strong>.</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="notice">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      {{ source_note }}
+      Links last checked <strong>{{ verified_on }}</strong>.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="assist">
+    <div class="assist__text">
+      <h2 class="assist__title">How DERB helps</h2>
+      <p class="assist__body">
+        DERB prepares the paperwork that goes with these applications &mdash;
+        request and authorization letters, sworn statements, ID data pages,
+        CVs &mdash; and prints them for you. The application itself is submitted
+        on the official portal.
+      </p>
+    </div>
+    <a class="btn btn--primary assist__btn" href="{{ url_for('letters.new', doc='request-letter') }}">
+      {{ icon('letter', 18) }}
+      Prepare Documents
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Live filter for the Official Services cards.
+   Dependency-free and page-scoped: the rest of the app stays untouched. */
+(function () {
+  "use strict";
+  var input = document.getElementById("os-search");
+  if (!input) return;
+
+  var lists = Array.prototype.slice.call(document.querySelectorAll("[data-service-list]"));
+  var featured = document.querySelector('[data-service-section="featured"]');
+  var empty = document.getElementById("os-empty");
+  if (!lists.length) return;
+
+  function apply() {
+    var terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+    var visible = 0;
+
+    lists.forEach(function (list) {
+      var shown = 0;
+      Array.prototype.forEach.call(list.children, function (card) {
+        var haystack = card.getAttribute("data-search") || "";
+        var match = terms.every(function (term) { return haystack.indexOf(term) !== -1; });
+        card.hidden = !match;
+        if (match) shown++;
+      });
+      visible += shown;
+      list.setAttribute("data-visible-count", String(shown));
+    });
+
+    // While searching, hide the featured copy so matches are not listed twice.
+    if (featured) featured.hidden = terms.length > 0;
+    if (empty) empty.hidden = visible > 0;
+  }
+
+  input.addEventListener("input", apply);
+  input.addEventListener("search", apply);
+  apply();
+})();
+</script>
+{% endblock %}

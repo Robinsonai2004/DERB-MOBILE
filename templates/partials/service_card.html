@@ -1,0 +1,44 @@
+{#
+  Service card partial for the Official Services page.
+
+  Expects `service` (a core.official_services.OfficialService). The avatar is
+  rendered offline from the service name - no image request, no CDN. The portal
+  link is only rendered as a link when a verified URL exists; otherwise the card
+  says so instead of showing a guessed government address.
+#}
+{% from "partials/icons.html" import icon %}
+<article class="service-card"
+         data-search="{{ service.search_text }}"
+         style="--accent: {{ service.accent }}">
+  <div class="service-card__head">
+    <span class="service-card__avatar" aria-hidden="true">{{ service.initials }}</span>
+    <div class="service-card__meta">
+      <h3 class="service-card__name">{{ service.name }}</h3>
+      <p class="service-card__desc">{{ service.description }}</p>
+    </div>
+  </div>
+
+  {% if service.portal_note %}
+  <p class="service-card__note">{{ icon('info', 14, 'service-card__note-icon') }}{{ service.portal_note }}</p>
+  {% endif %}
+
+  <div class="service-card__actions">
+    <a class="btn btn--ghost" href="{{ url_for('letters.new', doc='request-letter') }}">
+      {{ icon('letter', 16) }}
+      Get Assistance
+    </a>
+    {% if service.has_portal %}
+    <a class="btn btn--ghost service-card__web" href="{{ service.portal_url }}"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="{{ service.portal_label }} for {{ service.name }} (opens in a new tab)">
+      {{ icon('external', 16) }}
+      {{ service.portal_label }}
+    </a>
+    {% else %}
+    <span class="btn btn--ghost service-card__web is-disabled" aria-disabled="true">
+      {{ icon('info', 16) }}
+      Link pending verification
+    </span>
+    {% endif %}
+  </div>
+</article>

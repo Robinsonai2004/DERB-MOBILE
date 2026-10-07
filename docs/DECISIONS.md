@@ -70,7 +70,37 @@ means new services only need new columns/rows, not migrations tooling.
 * `color-mix()` is used for accent tints with a `@supports` fallback for older
   Android WebViews.
 
-## 6. Accessibility from the start
+## 6. Official Services: real links only, no CDN avatars (decided)
+
+The `/official-services` screen lists government and Nigeria Police services
+DERB assists with. Two rules shaped it.
+
+**Links must be verified.** An earlier draft pointed every card at a
+`https://example.gov.ng/services/<slug>` placeholder. That is a guessed
+government address, so it was removed. The catalog in `core/official_services.py`
+now allows only hosts we have opened and seen the service on
+(`www.npf.gov.ng`, `cmris.npf.gov.ng`, `possap.gov.ng`), and the test suite
+fails if a card points anywhere else. Where a service has no dedicated page the
+card links the official index **and** says so in `portal_note`, and a service
+with no verified link at all shows "link pending verification" instead of a
+button. `VERIFIED_ON` records when the links were last checked and is shown to
+the customer.
+
+The page also states plainly that DERB does not apply, submit or pay on the
+customer's behalf - the application is completed on the official portal.
+
+**Avatars must work offline.** The draft loaded card icons from
+`ui-avatars.com`, which is a CDN: on a phone with no data the cards would show
+broken images, and it leaks the customer's browsing to a third party. Avatars
+are now two initials rendered from the service name in the service accent
+colour - pure CSS text, zero network. The smoke test's "no CDN references"
+check covers the new stylesheet too.
+
+The live search filter is ~30 lines of dependency-free JS in the page's
+`{% block scripts %}`. While searching it hides the "Featured" copy of the
+cards so matches are not listed twice.
+
+## 7. Accessibility from the start
 
 Minimum 48px touch targets, `:focus-visible` outlines, `prefers-reduced-motion`
 support and safe-area insets for notched phones.

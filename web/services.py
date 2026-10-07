@@ -11,6 +11,9 @@ from __future__ import annotations
 
 from flask import Blueprint, abort, render_template
 
+# Imported under an alias: the route below is also called official_services(),
+# so a plain import would be shadowed by the view function.
+from core import official_services as official_catalog
 from core import registry
 
 # NOTE: /cv, /saved and /letters are implemented by their own blueprints.
@@ -55,3 +58,20 @@ def templates():
 @bp.route("/settings")
 def settings():
     return _render("settings")
+
+
+@bp.route("/official-services")
+def official_services():
+    """Government / Nigeria Police services DERB assists customers with.
+
+    The catalog (names, descriptions and verified portal links) lives in
+    core/official_services.py so the page, the cards and the tests share
+    one source of truth.
+    """
+    return render_template(
+        "pages/official_services.html",
+        featured_services=official_catalog.FEATURED_OFFICIAL_SERVICES,
+        all_services=official_catalog.OFFICIAL_SERVICES,
+        verified_on=official_catalog.VERIFIED_ON,
+        source_note=official_catalog.SOURCE_NOTE,
+    )
