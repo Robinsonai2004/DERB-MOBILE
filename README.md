@@ -85,7 +85,7 @@ python scripts/smoke_test.py             # 41 checks - foundation & dashboard
 python scripts/test_cv_workflow.py       # 64 checks - template picker/editor/save
 python scripts/test_exports.py           # 29 checks - CV PDF & DOCX export
 python scripts/test_letters.py           # 154 checks - letters & documents module
-python scripts/test_official_services.py # 91 checks - official services page
+python scripts/test_official_services.py # 93 checks - official services page
 python scripts/test_doc_workflow.py      # 84 checks - free-format Document editor
 ```
 
