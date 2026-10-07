@@ -100,7 +100,30 @@ The live search filter is ~30 lines of dependency-free JS in the page's
 `{% block scripts %}`. While searching it hides the "Featured" copy of the
 cards so matches are not listed twice.
 
-## 7. Accessibility from the start
+## 7. Free-format Documents reuse the shared project table & export engines
+
+**The need:** besides tiled CV and catalogue letters, customers bring text to
+be typed verbatim - a speech, essay, assignment, report or minutes. That is not
+the template-driven Letters flow, so it became its own **Documents** service
+(Phase 7).
+
+**Decision:** a Document is stored in the very same `projects` table under
+`doc_type='DOCUMENT'` with `template_slug='free-format'`. There is no second
+storage path, migration or backup story - **Saved Work** lists CVs and documents
+together (newest first), and the PDF/DOCX exports go through the same Phase 4
+engines (`core/cv_pdf._Doc`, the OOXML helpers in `core/cv_docx.py`), writing to
+`DERB/Documents/`. `core/doc_model.py` is the single producer of the payload;
+`normalize()`/`plain()` reduce anything pasted from a web page to safe text (no
+scripts, remote images or event handlers), which keeps the no-CDN guarantee by
+construction.
+
+Letters deliberately stay separate: they are structured templates with their
+own preview and `Saved Letters` screen, so folding them into this table would
+have flattened a meaningful distinction. A save posted against a foreign
+`doc_type` id never overwrites that row - it creates a new document instead
+(covered by the test).
+
+## 8. Accessibility from the start
 
 Minimum 48px touch targets, `:focus-visible` outlines, `prefers-reduced-motion`
 support and safe-area insets for notched phones.

@@ -59,10 +59,13 @@ SERVICES: tuple[Service, ...] = (
     Service(
         slug="documents",
         title="Documents",
-        subtitle="General typed documents & forms",
+        subtitle="Type, print & export any free-format document",
         icon="document",
         accent="#0ea5e9",
-        phase="Phase 12",
+        status="ready",
+        phase="Free-format editor live",
+        endpoint="documents.new",
+        tags=("Editor", "PDF", "DOCX"),
     ),
     Service(
         slug="school",

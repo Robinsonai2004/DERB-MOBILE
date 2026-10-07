@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Preview Document{% endblock %}
+{% block body_class %}page-documents{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('documents.edit', document_id=document.id) }}"
+     aria-label="Back to editor">{{ icon('back', 22) }}</a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Preview</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %} no-print">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<div class="preview-toolbar no-print">
+  <a class="btn btn--primary" href="{{ url_for('documents.edit', document_id=document.id) }}">
+    {{ icon('back', 16) }} Edit
+  </a>
+  <button class="btn btn--ghost" type="button" data-role="print">{{ icon('document', 16) }} Print</button>
+  <form method="post" action="{{ url_for('documents.export_pdf', document_id=document.id) }}">
+    <button class="btn btn--ghost" type="submit">{{ icon('pdf', 16) }} PDF</button>
+  </form>
+  <form method="post" action="{{ url_for('documents.export_docx', document_id=document.id) }}">
+    <button class="btn btn--ghost" type="submit">{{ icon('docx', 16) }} DOCX</button>
+  </form>
+</div>
+
+<article class="sheet-doc" id="doc-sheet" data-align="{{ payload.align }}">
+  <header class="sheet-doc__head">
+    <h1 class="sheet-doc__title">{{ title_text }}</h1>
+    <div class="sheet-doc__rule"></div>
+  </header>
+
+  <div class="sheet-doc__body" data-align="{{ payload.align }}"
+       style="font-size: {{ size_pt }}pt;">
+    {% for line in payload.body_text.split('\n') %}
+      {% if line.strip() %}
+        {% if line.strip().startswith('- ') %}
+        <p class="sheet-doc__bullet">{{ line.strip()[2:] }}</p>
+        {% else %}
+        <p class="sheet-doc__line">{{ line }}</p>
+        {% endif %}
+      {% else %}
+      <p class="sheet-doc__gap">&nbsp;</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+</article>
+
+<p class="sheet-doc__hint no-print">
+  {{ icon('info', 16, 'notice__icon') }}
+  Prints as a clean A4 page: navigation, toolbar and buttons are hidden
+  automatically. Export PDF/DOCX reuses the shared DERB engines and stores the
+  file under <span class="mono">DERB/Documents/</span>.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/document-editor.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

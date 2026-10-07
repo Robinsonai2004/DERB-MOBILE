@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Document{% endblock %}
+{% block body_class %}page-documents{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Document</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block appbar_actions %}
+  {% if document %}
+  <a class="appbar__link" href="{{ url_for('documents.preview', document_id=document.id) }}">
+    {{ icon('document', 18) }} Preview
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %} no-print">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+{% if saved %}
+<div class="row-done no-print">
+  <p class="row-done__text">Saved. You can keep editing, or open <strong>Saved Work</strong> to export.</p>
+  <form method="post" action="{{ url_for('documents.export_pdf', document_id=document.id) }}" class="row-done__form">
+    <button class="btn btn--ghost btn--small" type="submit">{{ icon('pdf', 16) }} Export PDF</button>
+  </form>
+</div>
+{% endif %}
+
+<section class="doc-hero no-print">
+  <h1 class="doc-hero__title">Document</h1>
+  <p class="doc-hero__sub">Create, edit, print and export any document.</p>
+</section>
+
+{# The whole editor is one form; toolbar buttons drive contenteditable commands. #}
+<form class="doc-editor" method="post" action="{{ url_for('documents.save') }}" id="doc-editor-form">
+  {% if document %}<input type="hidden" name="project_id" value="{{ document.id }}">{% endif %}
+  <input type="hidden" name="size" id="doc-size" value="{{ payload.size }}">
+  <input type="hidden" name="align" id="doc-align" value="{{ payload.align }}">
+
+  {# ---------------------------------------------------------- toolbar #}
+  <div class="doc-toolbar no-print" role="toolbar" aria-label="Text formatting" id="doc-toolbar">
+    <div class="doc-toolbar__row">
+      <button type="button" class="doc-tool" data-cmd="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
+      <button type="button" class="doc-tool" data-cmd="italic" title="Italic" aria-label="Italic"><em>I</em></button>
+      <button type="button" class="doc-tool" data-cmd="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+
+      <span class="doc-tool__sep" aria-hidden="true"></span>
+
+      <label class="doc-tool__size" aria-label="Font size">
+        <select id="doc-size-select" data-role="size">
+          {% for s in (2, 3, 4, 5, 6, 7) %}
+          <option value="{{ s }}" {% if s|int == payload.size|int %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <span class="doc-tool__sep" aria-hidden="true"></span>
+
+      <button type="button" class="doc-tool doc-tool--align" data-align="left" title="Align left" aria-label="Align left">&#8676;</button>
+      <button type="button" class="doc-tool doc-tool--align" data-align="center" title="Centre" aria-label="Centre">&#8544;&#8541;</button>
+      <button type="button" class="doc-tool doc-tool--align" data-align="right" title="Align right" aria-label="Align right">&#8677;</button>
+
+      <span class="doc-tool__sep" aria-hidden="true"></span>
+
+      <button type="button" class="doc-tool" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">&bull;&#8202;&mdash;</button>
+      <button type="button" class="doc-tool" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1&#8202;.</button>
+
+      <span class="doc-tool__sep" aria-hidden="true"></span>
+
+      <button type="button" class="doc-tool" data-cmd="undo" title="Undo" aria-label="Undo">&larr;</button>
+      <button type="button" class="doc-tool" data-cmd="redo" title="Redo" aria-label="Redo">&rarr;</button>
+      <button type="button" class="doc-tool" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">&#9003;</button>
+    </div>
+  </div>
+
+  {# ---------------------------------------------------------- paper #}
+  <div class="doc-paper-wrap">
+    <section class="doc-paper" aria-label="Document workspace">
+      <div class="doc-paper__titlebox">
+        <input class="doc-paper__title" type="text" id="doc-title" name="title"
+               value="{{ payload.title }}" placeholder="Untitled Document"
+               autocomplete="off" maxlength="120">
+      </div>
+
+{# The editor submits the typed body as plain text with newlines; the JS
+   serialises the contenteditable area into #doc-body on submit and the
+   server's doc_model normalises it (see core/doc_model.py). Blank lines
+   are preserved as paragraph spacing. #}
+      <input type="hidden" name="body_text" id="doc-body" value="">
+      <div class="doc-paper__area" id="doc-area" contenteditable="true"
+           data-align="{{ payload.align }}" data-size="{{ payload.size }}"
+           role="textbox" aria-multiline="true"
+           aria-label="Document text" spellcheck="true"
+           data-placeholder="Start typing your document here...">{{ payload.body_text | e | replace("\n", "<br>") | safe }}</div>
+    </section>
+  </div>
+
+  {# ---------------------------------------------------------- actions #}
+  <div class="doc-bar no-print">
+    <button class="btn btn--primary" type="submit" id="doc-save-btn">
+      {{ icon('saved', 18) }} <span id="doc-save-label">{% if document %}Update Document{% else %}Save Document{% endif %}</span>
+    </button>
+    <button class="btn btn--ghost" type="button" id="doc-print-btn" data-role="print">
+      {{ icon('document', 18) }} Print
+    </button>
+    <button class="btn btn--ghost btn--danger-outline" type="button" id="doc-clear-btn" data-role="clear">
+      New / Clear
+    </button>
+  </div>
+
+  {% if document %}
+  <div class="doc-bar doc-bar--export no-print">
+    <form method="post" action="{{ url_for('documents.export_pdf', document_id=document.id) }}" class="doc-bar__form">
+      <button class="btn btn--ghost" type="submit">{{ icon('pdf', 16) }} Export PDF</button>
+    </form>
+    <form method="post" action="{{ url_for('documents.export_docx', document_id=document.id) }}" class="doc-bar__form">
+      <button class="btn btn--ghost" type="submit">{{ icon('docx', 16) }} Export DOCX</button>
+    </form>
+    <a class="btn btn--ghost" href="{{ url_for('saved.index') }}">{{ icon('saved', 16) }} Saved Work</a>
+  </div>
+  {% endif %}
+</form>
+
+{# Hidden form used by "New / Clear": a small POST that saves an empty document is
+   pointless, so clearing simply resets the page in the browser (see JS). #}
+<section class="section no-print">
+  <div class="notice">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      This is DERB's free-format workspace: speech, essay, assignment, report,
+      minutes or any text you want typed, printed or exported. It is separate
+      from <strong>Letters</strong> (which follow fixed templates). When you
+      press <strong>Save</strong> it appears alongside CVs in
+      <a href="{{ url_for('saved.index') }}"><strong>Saved Work</strong></a>.
+    </p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/document-editor.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

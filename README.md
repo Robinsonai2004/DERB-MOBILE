@@ -2,8 +2,9 @@
 
 **DERB FINANCE CONCEPTS** &middot; Offline Document Studio for Android (Termux)
 
-Builds customer documents - CVs first - entirely offline on your phone and saves
-them to a local folder you can transfer to a PC for printing.
+Builds customer documents - CVs, letters and any free-format text - entirely
+offline on your phone and saves them to a local folder you can transfer to a PC
+for printing.
 
 ---
 
@@ -17,11 +18,13 @@ them to a local folder you can transfer to a PC for printing.
 | 4 | PDF & DOCX export (standard-library writers) | **Done** |
 | 5 | Letters & Documents: 86 document types, 7 categories, dynamic forms, Saved Letters | **Done** |
 | 6 | Official Services: verified police/government portal links + live search | **Done** |
-| 7 | Template Manager + remaining services (Documents, School, Business, Passport) | Next |
+| 7 | Free-format Document editor: type anything, print, PDF & DOCX export | **Done** |
+| 8 | Template Manager + remaining services (School, Business, Passport) | Next |
 
-> Version 1 targets the CV / Resume workflow. Letters, Documents, School,
-> Business and Passport Photos are visible on the dashboard and clearly marked
-> **Coming Soon** - they are placeholders, not broken links.
+> CV / Resume, Letters, the free-format Document editor and Official Services
+> are live. School, Business, Passport Photos, Templates and Settings are
+> visible on the dashboard and clearly marked **Coming Soon** - they are
+> placeholders, not broken links.
 
 ---
 
@@ -83,6 +86,7 @@ python scripts/test_cv_workflow.py       # 64 checks - template picker/editor/sa
 python scripts/test_exports.py           # 29 checks - CV PDF & DOCX export
 python scripts/test_letters.py           # 154 checks - letters & documents module
 python scripts/test_official_services.py # 91 checks - official services page
+python scripts/test_doc_workflow.py      # 84 checks - free-format Document editor
 ```
 
 The export test walks the real workflow: create project, export PDF and DOCX
@@ -105,11 +109,15 @@ DERB-Mobile/
 │   ├── db.py               # SQLite schema + built-in templates
 │   ├── registry.py         # the 10 services (dashboard is generated from this)
 │   ├── official_services.py # verified police/gov portal catalog (Phase 6)
+│   ├── doc_model.py        # free-format Document model + sanitisation
+│   ├── doc_pdf.py          # Document PDF writer (shared Phase 4 engine)
+│   ├── doc_docx.py         # Document DOCX writer (shared Phase 4 engine)
 │   ├── templates_repo.py   # template queries + default-template setting
 │   └── projects_repo.py    # saved-project queries
 ├── web/
 │   ├── __init__.py         # Flask app factory, error pages
 │   ├── dashboard.py        # home screen, /about, /health
+│   ├── documents.py        # free-format Document editor/preview/export
 │   └── services.py         # routes for all services, incl. /official-services
 ├── templates/              # Jinja screens
 │   ├── base.html

@@ -1,0 +1,293 @@
+/* ==========================================================================
+   DERB MOBILE - Document screen (free-format editor)
+   Kept in its own file so app.css stays untouched. No external fonts,
+   images or CDNs anywhere - system fonts only.
+   ========================================================================== */
+
+/* ------------------------------------------------------------------- hero */
+.doc-hero { margin-bottom: 12px; }
+
+.doc-hero__title {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--navy-900, #0b2545);
+  letter-spacing: -.2px;
+}
+
+.doc-hero__sub {
+  font-size: 13px;
+  color: var(--muted, #667085);
+  margin-top: 3px;
+}
+
+.row-done {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  background: var(--ok-soft, #e2f5ee);
+  border: 1px solid #bfe8d9;
+  border-radius: var(--radius-sm, 10px);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.row-done__text { flex: 1; min-width: 180px; font-size: 13px; color: var(--ok, #0f7a5a); }
+.row-done__form { display: flex; }
+
+.btn--small { min-height: 40px; font-size: 13px; padding: 0 12px; }
+.btn--danger-outline { color: #b42318; border-color: #fecdc9; }
+
+/* ----------------------------------------------------------------- toolbar */
+.doc-toolbar {
+  background: var(--surface, #fff);
+  border: 1px solid var(--line, #dde3ee);
+  border-radius: var(--radius-sm, 10px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(16, 24, 40, .06));
+  padding: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.doc-toolbar__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: max-content;   /* scrollable rather than crushed on narrow phones */
+}
+
+.doc-tool {
+  flex: none;
+  min-height: 42px;
+  min-width: 42px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-2, #344054);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.doc-tool:active { background: var(--surface-2, #f7f9fc); }
+
+.doc-tool.is-on {
+  background: var(--navy-100, #e4ecf7);
+  border-color: #c8d6ea;
+  color: var(--navy-700, #123a72);
+  font-weight: 700;
+}
+
+.doc-tool__sep {
+  flex: none;
+  width: 1px;
+  height: 22px;
+  background: var(--line, #dde3ee);
+  margin: 0 3px;
+}
+
+.doc-tool__size select {
+  height: 42px;
+  min-width: 58px;
+  padding: 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-2, #344054);
+  background: var(--surface-2, #f7f9fc);
+  border: 1px solid var(--line, #dde3ee);
+  border-radius: 8px;
+}
+
+.doc-tool--align { font-size: 16px; }
+
+/* ------------------------------------------------------------------- paper */
+.doc-paper-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.doc-paper {
+  width: 100%;
+  max-width: 640px;
+  background: #fff;
+  border: 1px solid var(--line, #dde3ee);
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(11, 37, 69, .14);
+  padding: 18px 16px 22px;
+}
+
+@media (min-width: 560px) {
+  .doc-paper { padding: 26px 30px 30px; }
+}
+
+.doc-paper__titlebox { border-bottom: 1px solid #e6eaf2; margin-bottom: 12px; }
+
+.doc-paper__title {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--ink, #101828);
+  padding: 6px 2px 10px;
+}
+
+.doc-paper__title::placeholder { color: #98a2b3; font-weight: 700; }
+
+.doc-paper__area {
+  min-height: 52vh;
+  outline: none;
+  font-size: calc(15px + (var(--doc-size-step, 0) * 1px));
+  line-height: 1.6;
+  color: #14203a;
+  word-break: break-word;
+}
+
+.doc-paper__area:empty::before {
+  content: attr(data-placeholder);
+  color: #98a2b3;
+  pointer-events: none;
+}
+
+.doc-paper__area[data-align="center"] { text-align: center; }
+.doc-paper__area[data-align="right"] { text-align: right; }
+
+/* font-size steps driven by the hidden #doc-size field's data attribute */
+.doc-paper__area[data-size="2"] { --doc-size-step: -2; }
+.doc-paper__area[data-size="3"] { --doc-size-step: 0; }
+.doc-paper__area[data-size="4"] { --doc-size-step: 2; }
+.doc-paper__area[data-size="5"] { --doc-size-step: 5; }
+.doc-paper__area[data-size="6"] { --doc-size-step: 8; }
+.doc-paper__area[data-size="7"] { --doc-size-step: 12; }
+.doc-paper__area ul,
+.doc-paper__area ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+/* ---------------------------------------------------------------- actions */
+.doc-bar {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.doc-bar--export { grid-template-columns: 1fr 1fr 1fr; margin-top: 8px; }
+.doc-bar .btn { min-height: 48px; font-size: 13.5px; justify-content: center; }
+.doc-bar__form .btn { width: 100%; min-height: 48px; }
+
+@media (max-width: 520px) {
+  .doc-bar { grid-template-columns: 1fr 1fr; }
+  .doc-bar .btn--primary { grid-column: 1 / -1; order: -1; }
+  .doc-bar .btn { min-height: 46px; font-size: 12.5px; padding: 0 8px; }
+}
+
+/* -------------------------------------------------- preview (A4 sheet doc) */
+.sheet-doc {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: #fff;
+  color: #14203a;
+  padding: 20mm 18mm 24mm;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(11, 37, 69, .18);
+  font-size: var(--doc-size, 12pt);
+  line-height: 1.55;
+  overflow-wrap: break-word;
+}
+
+.sheet-doc[data-align="center"] .sheet-doc__body { text-align: center; }
+.sheet-doc[data-align="right"] .sheet-doc__body { text-align: right; }
+
+.sheet-doc__title {
+  font-size: 15pt;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: #123a72;
+  line-height: 1.35;
+}
+
+.sheet-doc__rule {
+  height: 2px;
+  background: #123a72;
+  margin-top: 8px;
+}
+
+.sheet-doc__body { margin-top: 16px; }
+.sheet-doc__line { margin: 0 0 7px; }
+.sheet-doc__bullet { margin: 0 0 5px 16px; position: relative; }
+.sheet-doc__bullet::before {
+  content: "\2022";
+  position: absolute;
+  left: -13px;
+  color: #344054;
+}
+
+.sheet-doc__hint {
+  font-size: 12px;
+  color: var(--muted, #667085);
+  margin: 12px 4px 0;
+  line-height: 1.5;
+}
+
+.preview-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.preview-toolbar .btn { flex: 1 1 auto; min-height: 46px; justify-content: center; font-size: 14px; }
+.preview-toolbar form { display: flex; }
+.preview-toolbar form .btn { width: 100%; }
+
+/* score: preview sheet scales with a zoom like cv.css does */
+.doc-zoom { zoom: .44; }
+@media (min-width: 560px) { .doc-zoom { zoom: .62; } }
+@media (min-width: 900px) { .doc-zoom { zoom: .86; } }
+
+/* ------------------------------------------------------------------ states */
+/* The JS toggles [hidden] on toolbar pieces; keep flex from winning. */
+.doc-toolbar[hidden], .doc-paper[hidden], .doc-bar[hidden] { display: none !important; }
+
+/* ------------------------------------------------------------------ print */
+@page { size: A4; margin: 14mm; }
+
+@media print {
+  body { background: #fff; }
+  .appbar, .appfooter, .doc-toolbar, .doc-bar, .doc-hero, .row-done, .preview-toolbar,
+  .no-print, .notice, .section .notice, .sheet-doc__hint {
+    display: none !important;
+  }
+  .app, .app__main {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+    display: block;
+    background: #fff;
+  }
+  .doc-paper-wrap { display: block; }
+  .doc-paper, .doc-editor { background: #fff; border: 0; box-shadow: none; padding: 0; }
+  .doc-paper__title { border: 0; }
+  .doc-paper { padding: 0; }
+  /* When printing from the editor, print title + typed content only. */
+  .doc-paper__title { font-size: 15pt; text-align: center; margin-bottom: 10pt; }
+  .doc-paper__area { min-height: 0; font-size: 12pt; }
+  .sheet-doc, .sheet-doc.doc-zoom {
+    zoom: 1 !important;
+    width: auto;
+    min-height: 0;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+}

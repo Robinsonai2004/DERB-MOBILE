@@ -17,6 +17,7 @@ from core import official_services as official_catalog
 from core import registry
 
 # NOTE: /cv, /saved and /letters are implemented by their own blueprints.
+# /documents lives in web/documents.py (free-format editor, Phase 7).
 
 bp = Blueprint("services", __name__)
 
@@ -30,11 +31,9 @@ def _render(slug: str):
     return render_template("pages/service_ready.html", service=service)
 
 
-@bp.route("/documents")
-def documents():
-    return _render("documents")
-
-
+# ---------------------------------------------------------------------------
+# Placeholder services (Coming Soon until their phase)
+# ---------------------------------------------------------------------------
 @bp.route("/school")
 def school():
     return _render("school")
