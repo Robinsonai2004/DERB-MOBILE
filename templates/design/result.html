@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ payload.title or 'Design' }}{% endblock %}
+{% block body_class %}page-design page-design-result{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('design.index') }}" aria-label="Back to design types">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('design.index') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ category.name if category else 'Design' }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block appbar_actions %}
+  <a class="appbar__link" href="{{ url_for('saved.index') }}">{{ icon('saved', 18) }} Saved</a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, message in messages %}
+  <div class="flash {% if cat == 'error' %}flash--error{% endif %} no-print">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+{% if saved %}
+<div class="row-done no-print">
+  <p class="row-done__text">Saved design. Adjust anything, then <strong>Save</strong> again to update.</p>
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" id="design-result-form"
+      action="{{ url_for('design.generate') }}">
+  <input type="hidden" name="category" value="{{ payload.category }}">
+  <input type="hidden" name="title" value="{{ payload.title }}">
+  <input type="hidden" name="instructions" value="{{ payload.instructions }}">
+  {% if document %}<input type="hidden" name="project_id" value="{{ document.id }}">{% endif %}
+  {% for key, value in payload.fields.items() %}
+  <input type="hidden" name="{{ key }}" value="{{ value }}">
+  {% endfor %}
+  {% for img in payload.images %}
+  <input type="hidden" name="image_filename" value="{{ img.filename }}">
+  {% endfor %}
+
+  <div class="preview-toolbar no-print">
+    {% if document %}
+    <a class="btn btn--ghost" href="{{ url_for('design.edit', design_id=document.id) }}">
+      {{ icon('back', 16) }} Edit
+    </a>
+    {% else %}
+    <button class="btn btn--ghost" type="submit" formaction="{{ url_for('design.edit_form') }}">
+      {{ icon('back', 16) }} Edit
+    </button>
+    {% endif %}
+    <button class="btn btn--ghost" type="submit" formaction="{{ url_for('design.generate') }}">
+      {{ icon('design', 16) }} Regenerate
+    </button>
+    <button class="btn btn--primary" type="submit" formaction="{{ url_for('design.save') }}">
+      {{ icon('saved', 16) }} {% if document %}Update{% else %}Save{% endif %}
+    </button>
+    <button class="btn btn--ghost" type="button" data-role="print">
+      {{ icon('document', 16) }} Print
+    </button>
+    <button class="btn btn--ghost" type="button" data-export="png">PNG</button>
+    <button class="btn btn--ghost" type="button" data-export="jpg">JPG</button>
+    <label class="field__label field__label--inline" for="theme">Style</label>
+    <select class="field__input field__input--inline" id="theme" name="theme">
+      {% for slug, t in themes.items() %}
+      <option value="{{ slug }}" {% if slug == payload.theme %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="design-stage">
+    <article class="design-poster" id="design-poster"
+             style="--aspect: {{ layout.aspect }};
+                    --pg-bg1: {{ layout.palette.bg1 }};
+                    --pg-bg2: {{ layout.palette.bg2 }};
+                    --pg-accent: {{ layout.palette.accent }};
+                    --pg-ink: {{ layout.palette.ink }};
+                    --pg-muted: {{ layout.palette.muted }};
+                    --pg-band-ink: {{ layout.palette.band_ink }};">
+      {% for block in layout.blocks %}
+        {% if block.kind == 'header' %}
+        <header class="dp-block dp-header" style="flex: {{ block.flex }}; background: {{ block.fill }}; color: {{ block.ink }}">
+          <h2 class="dp-title">{{ block.title }}</h2>
+          {% if block.subtitle %}<p class="dp-sub">{{ block.subtitle }}</p>{% endif %}
+        </header>
+        {% elif block.kind == 'info' %}
+        <section class="dp-block dp-info" style="flex: {{ block.flex }}">
+          {% for row in block.rows %}
+          <div class="dp-row">
+            <span class="dp-label" style="color: {{ block.muted }}">{{ row.label }}</span>
+            <span class="dp-value" style="color: {{ block.ink }}">{{ row.value }}</span>
+          </div>
+          {% endfor %}
+        </section>
+        {% elif block.kind == 'paragraph' %}
+        <section class="dp-block dp-paragraph" style="flex: {{ block.flex }}">
+          {% if block.heading %}<h3 class="dp-heading" style="color: {{ block.muted }}">{{ block.heading }}</h3>{% endif %}
+          <p class="dp-text" style="color: {{ block.ink }}">{{ block.text }}</p>
+        </section>
+        {% elif block.kind == 'gallery' %}
+        <section class="dp-block dp-gallery" style="flex: {{ block.flex }}; grid-template-columns: repeat({{ block.columns }}, 1fr)">
+          {% for img in block.images %}
+          <figure class="dp-photo">
+            <img src="{{ url_for('design.image', filename=img.filename) }}" alt="{{ img.role }}">
+          </figure>
+          {% endfor %}
+        </section>
+        {% elif block.kind == 'footer' %}
+        <footer class="dp-block dp-footer" style="flex: {{ block.flex }}; background: {{ block.fill }}; color: {{ block.ink }}">
+          {% for line in block.lines %}<span>{{ line }}</span>{% endfor %}
+        </footer>
+        {% endif %}
+      {% endfor %}
+    </article>
+  </div>
+</form>
+
+<p class="sheet-doc__hint no-print">
+  {{ icon('info', 16, 'notice__icon') }}
+  Print opens the phone's print dialog (choose <strong>Save as PDF</strong>).
+  PNG/JPG download a high-resolution image of this design.
+</p>
+
+<section class="section no-print">
+  <div class="notice notice--amber">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>{{ provider.note }}</p>
+  </div>
+</section>
+
+<canvas id="design-canvas" class="no-print" hidden></canvas>
+<script type="application/json" id="design-layout-json">{{ layout_json | safe }}</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/design.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

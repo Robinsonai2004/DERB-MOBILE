@@ -32,6 +32,7 @@ def create_app() -> Flask:
 def _register_blueprints(app: Flask) -> None:
     from web.cv import bp as cv_bp
     from web.dashboard import bp as dashboard_bp
+    from web.design import bp as design_bp
     from web.documents import bp as documents_bp
     from web.letters import bp as letters_bp
     from web.saved import bp as saved_bp
@@ -42,6 +43,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(cv_bp)
     app.register_blueprint(letters_bp)
     app.register_blueprint(documents_bp)
+    app.register_blueprint(design_bp)
     app.register_blueprint(saved_bp)
 
 

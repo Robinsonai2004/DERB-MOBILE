@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}{{ category.name }} Design{% endblock %}
+{% block body_class %}page-design{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('design.index') }}" aria-label="Back to design types">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('design.index') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">{{ category.name }}</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block appbar_actions %}
+  {% if document %}
+  <a class="appbar__link" href="{{ url_for('design.preview', design_id=document.id) }}">
+    {{ icon('design', 18) }} Preview
+  </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, message in messages %}
+  <div class="flash {% if cat == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+{% if saved %}
+<div class="row-done">
+  <p class="row-done__text">Design saved. You can keep editing or export it from
+    <strong>Saved Work</strong>.</p>
+  {% if document %}
+  <a class="btn btn--ghost btn--small" href="{{ url_for('design.preview', design_id=document.id) }}">
+    {{ icon('design', 16) }} Preview &amp; export
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+<section class="design-hero design-hero--compact" style="--cat-accent: {{ category.accent }}">
+  <span class="design-hero__icon">{{ icon(category.icon, 28) }}</span>
+  <div>
+    <h1 class="design-hero__title">{{ category.name }}</h1>
+    <p class="design-hero__sub">{{ category.description }}</p>
+  </div>
+</section>
+
+<form class="design-form" method="post" enctype="multipart/form-data"
+      action="{{ url_for('design.generate') }}" id="design-form">
+  <input type="hidden" name="category" value="{{ category.slug }}">
+  {% if document %}<input type="hidden" name="project_id" value="{{ document.id }}">{% endif %}
+
+  <div class="card">
+    <label class="field__label" for="title">Customer / Job title</label>
+    <input class="field__input" type="text" id="title" name="title" maxlength="120"
+           value="{{ payload.title }}" placeholder="e.g. CAC Choir 10th Anniversary"
+           autocomplete="off">
+
+    <label class="field__label" for="theme">Colour theme</label>
+    <select class="field__input" id="theme" name="theme">
+      {% for slug, t in themes.items() %}
+      <option value="{{ slug }}" {% if slug == payload.theme %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="card">
+    <h2 class="card__title">{{ category.name }} details</h2>
+    {% for fd in category.field_defs() %}
+    <label class="field__label" for="f-{{ fd.key }}">{{ fd.label }}</label>
+      {% if fd.type == 'textarea' %}
+      <textarea class="field__input" id="f-{{ fd.key }}" name="{{ fd.key }}" rows="3"
+                placeholder="{{ fd.placeholder or '' }}">{{ payload.fields.get(fd.key, '') }}</textarea>
+      {% else %}
+      <input class="field__input" type="{{ fd.type }}" id="f-{{ fd.key }}" name="{{ fd.key }}"
+             {% if fd.inputmode %}inputmode="{{ fd.inputmode }}"{% endif %}
+             placeholder="{{ fd.placeholder or '' }}"
+             value="{{ payload.fields.get(fd.key, '') }}">
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2 class="card__title">Images</h2>
+    <p class="field__hint">{{ category.photo_hint or 'Add the customer’s images (optional).' }}</p>
+
+    {% if images %}
+    <div class="design-thumbs">
+      {% for img in images %}
+      <figure class="design-thumb">
+        <input type="hidden" name="image_filename" value="{{ img.filename }}">
+        <img src="{{ url_for('design.image', filename=img.filename) }}" alt="">
+        <label class="design-thumb__remove">
+          <input type="checkbox" name="remove_image" value="{{ img.filename }}"> Remove
+        </label>
+      </figure>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <label class="btn btn--ghost design-upload" for="design-images">
+      {{ icon('design', 18) }} + Add Image(s)
+    </label>
+    <input class="design-file" type="file" id="design-images" name="images"
+           accept="image/*" multiple>
+    <div class="design-previews" id="design-previews"></div>
+    <p class="field__hint">You can add several images (photo, logo, guest minister&hellip;).
+      Images stay on this phone.</p>
+  </div>
+
+  <div class="card">
+    <h2 class="card__title">Additional information / instructions</h2>
+    <p class="field__hint">Tell the system anything else you want included.</p>
+    <textarea class="field__input" id="instructions" name="instructions" rows="4"
+              placeholder="e.g. Use a Nigerian church anniversary style, make the choir name prominent, gold and white, leave space for three guest photos.">{{ payload.instructions }}</textarea>
+  </div>
+
+  <div class="design-bar">
+    <button class="btn btn--primary" type="submit">
+      {{ icon('design', 18) }} Generate Design
+    </button>
+    <button class="btn btn--ghost" type="submit" name="action" value="save"
+            formaction="{{ url_for('design.save') }}">
+      {{ icon('saved', 18) }} Save
+    </button>
+  </div>
+</form>
+
+<section class="section">
+  <div class="notice notice--amber">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>{{ provider.note }}</p>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/design.js') }}?v={{ asset_version }}" defer></script>
+{% endblock %}

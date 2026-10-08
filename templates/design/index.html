@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Graphic Design{% endblock %}
+{% block body_class %}page-design{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Graphic Design</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<section class="design-hero">
+  <span class="design-hero__icon">{{ icon('design', 34) }}</span>
+  <h1 class="design-hero__title">Graphic Design</h1>
+  <p class="design-hero__sub">Pick a design type, enter the customer's details,
+    add their images and generate a professional design in seconds.</p>
+</section>
+
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">Choose a design type</h2>
+    <span class="section__meta">{{ categories|length }} types</span>
+  </div>
+  <div class="design-cats">
+    {% for c in categories %}
+    <a class="design-cat" href="{{ url_for('design.new', category=c.slug) }}"
+       style="--cat-accent: {{ c.accent }}">
+      <span class="design-cat__icon">{{ icon(c.icon, 26) }}</span>
+      <span class="design-cat__body">
+        <span class="design-cat__name">{{ c.name }}</span>
+        <span class="design-cat__desc">{{ c.description }}</span>
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if recent %}
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">Recent designs</h2>
+    <a class="section__link" href="{{ url_for('saved.index') }}">View all</a>
+  </div>
+  <ul class="recent">
+    {% for item in recent %}
+    <li class="recent__item">
+      <span class="recent__icon">{{ icon('design', 20) }}</span>
+      <span class="recent__body">
+        <a class="recent__name" href="{{ url_for('design.edit', design_id=item.project.id) }}">{{ item.title }}</a>
+        <span class="recent__meta">{{ item.project.doc_type }} &middot; {{ item.project.updated_at }}</span>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="notice">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p>
+      This workspace creates flyers, cards, certificates and banners from
+      ready layouts using the details and images you enter &mdash; it is a
+      fast customer-service tool, not a blank editor.
+    </p>
+  </div>
+</section>
+{% endblock %}

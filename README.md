@@ -19,12 +19,17 @@ for printing.
 | 5 | Letters & Documents: 86 document types, 7 categories, dynamic forms, Saved Letters | **Done** |
 | 6 | Official Services: verified police/government portal links + live search | **Done** |
 | 7 | Free-format Document editor: type anything, print, PDF & DOCX export | **Done** |
-| 8 | Template Manager + remaining services (School, Business, Passport) | Next |
+| 8 | Graphic Design workspace: 15 design types, per-type forms, image upload, layout engine, print/PNG/JPG | **Done** |
+| 9 | Template Manager + remaining services (School, Business) | Next |
 
-> CV / Resume, Letters, the free-format Document editor and Official Services
-> are live. School, Business, Passport Photos, Templates and Settings are
+> CV / Resume, Letters, the free-format Document editor, Graphic Design and
+> Official Services are live. School, Business, Templates and Settings are
 > visible on the dashboard and clearly marked **Coming Soon** - they are
 > placeholders, not broken links.
+>
+> **Graphic Design** lives on the old **Passport Photo** tile (the placeholder
+> was empty). The `/passport` URL still works - it redirects to the workspace.
+> There is no separate Graphic Design tile.
 
 ---
 
@@ -81,12 +86,13 @@ Stop the server with `CTRL+C` in Termux.
 
 ```bash
 cd ~/DERB-Mobile
-python scripts/smoke_test.py             # 41 checks - foundation & dashboard
+python scripts/smoke_test.py             # 42 checks - foundation & dashboard
 python scripts/test_cv_workflow.py       # 64 checks - template picker/editor/save
 python scripts/test_exports.py           # 29 checks - CV PDF & DOCX export
 python scripts/test_letters.py           # 154 checks - letters & documents module
 python scripts/test_official_services.py # 93 checks - official services page
 python scripts/test_doc_workflow.py      # 84 checks - free-format Document editor
+python scripts/test_graphic_design.py    # 200 checks - Graphic Design workflow
 ```
 
 The export test walks the real workflow: create project, export PDF and DOCX
@@ -112,12 +118,18 @@ DERB-Mobile/
 │   ├── doc_model.py        # free-format Document model + sanitisation
 │   ├── doc_pdf.py          # Document PDF writer (shared Phase 4 engine)
 │   ├── doc_docx.py         # Document DOCX writer (shared Phase 4 engine)
+│   ├── design_catalog.py   # Graphic Design categories + per-type fields + themes
+│   ├── design_model.py     # design payload model + sanitisation
+│   ├── design_store.py     # multi-image upload store (local, offline)
+│   ├── design_render.py    # deterministic layout engine (HTML + canvas)
+│   ├── design_generation.py # generation provider seam - AI plugs in here
 │   ├── templates_repo.py   # template queries + default-template setting
 │   └── projects_repo.py    # saved-project queries
 ├── web/
 │   ├── __init__.py         # Flask app factory, error pages
 │   ├── dashboard.py        # home screen, /about, /health
 │   ├── documents.py        # free-format Document editor/preview/export
+│   ├── design.py           # Graphic Design workspace (the Passport Photo slot)
 │   └── services.py         # routes for all services, incl. /official-services
 ├── templates/              # Jinja screens
 │   ├── base.html
@@ -130,7 +142,7 @@ DERB-Mobile/
 ├── data/derb.db            # SQLite database (created on first run)
 ├── DERB/                   # your documents
 │   ├── CV/{Projects,PDF,DOCX}
-│   ├── Letters/ Documents/ School/ Business/ Passport/ Templates/
+│   ├── Letters/ Documents/ Designs/ School/ Business/ Passport/ Templates/
 └── scripts/smoke_test.py
 ```
 
@@ -164,6 +176,31 @@ Update `VERIFIED_ON` whenever you re-check the links.
 
 It appears automatically in search, its category, the form, preview, PDF and
 DOCX export. No template or route changes needed.
+
+## Adding a new design type later
+
+1. Add one entry to `CATEGORIES` in `core/design_catalog.py` (pick the field
+   keys, a theme and a poster aspect).
+
+It appears automatically on the Graphic Design chooser, with its own form,
+layout, print, PNG and JPG export. No template or route changes needed.
+
+## Connecting a real AI / image-generation provider
+
+Graphic Design ships with a **real, offline layout engine**
+(`core/design_render.py`) - it genuinely lays the operator's content and
+images into a professional poster. It is **not** an AI image generator, and the
+UI never pretends one is connected.
+
+To connect a real provider:
+
+1. Implement `AiDesignProvider.generate()` in `core/design_generation.py`
+   (add its HTTP client + read the API key from config/env).
+2. Flip its `configured` to `True`, set a real `label`, and make `_ACTIVE`
+   point at it.
+
+Until then `provider_status()` reports the honest state on every design
+screen. Nothing else changes - the routes and templates already read from it.
 
 ## Design notes
 

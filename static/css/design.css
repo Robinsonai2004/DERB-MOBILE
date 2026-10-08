@@ -1,0 +1,134 @@
+/*
+  Graphic Design workspace - DERB MOBILE.
+  Follows the app design language (system fonts only, no CDN, touch-first).
+  The poster is authored with container-query units so the same markup scales
+  for the phone screen, the print dialog and the canvas export.
+*/
+
+.page-design .app__main { padding-bottom: 96px; }
+
+/* ------------------------------------------------- hero ------------------ */
+.design-hero {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 16px;
+  background: linear-gradient(135deg, #0b2545, #123a72);
+  color: #fff;
+}
+.design-hero--compact { background: linear-gradient(135deg, #10233f, var(--cat-accent, #123a72)); }
+.design-hero__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px; flex: none;
+  background: rgba(255,255,255,.14);
+}
+.design-hero__title { margin: 0; font-size: 1.35rem; line-height: 1.2; }
+.design-hero__sub { margin: 4px 0 0; font-size: .9rem; color: rgba(255,255,255,.85); }
+
+/* ------------------------------------------------- category grid --------- */
+.design-cats {
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  margin-top: 10px;
+}
+.design-cat {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 14px; text-decoration: none;
+  background: #fff; color: inherit;
+  border: 1px solid #e6e9f0;
+  border-left: 4px solid var(--cat-accent, #123a72);
+  min-height: 64px;
+}
+.design-cat:active { transform: scale(.985); }
+.design-cat__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 12px; flex: none;
+  color: #fff; background: var(--cat-accent, #123a72);
+}
+.design-cat__body { min-width: 0; display: flex; flex-direction: column; }
+.design-cat__name { font-weight: 700; font-size: .98rem; }
+.design-cat__desc { font-size: .78rem; color: #5a6472; line-height: 1.25; }
+
+/* ------------------------------------------------- forms ----------------- */
+.field__label { display: block; font-size: .82rem; font-weight: 600; color: #33415c; margin: 10px 0 4px; }
+.field__label--inline { display: inline-block; margin: 0 6px 0 0; }
+.field__input {
+  width: 100%; box-sizing: border-box; min-height: 46px;
+  padding: 10px 12px; border-radius: 10px; border: 1px solid #cfd6e4;
+  background: #fff; font-size: 1rem; color: #1f2430;
+}
+.field__input--inline { width: auto; min-height: 40px; display: inline-block; }
+.field__hint { font-size: .78rem; color: #6b7280; margin: 4px 0 8px; }
+textarea.field__input { min-height: 84px; resize: vertical; }
+.design-form .card { margin: 12px 0; }
+
+/* ------------------------------------------------- image uploader -------- */
+.design-thumbs, .design-previews {
+  display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  margin: 6px 0 10px;
+}
+.design-thumb, .design-preview {
+  position: relative; margin: 0; border-radius: 10px; overflow: hidden;
+  border: 1px solid #e6e9f0; background: #f4f6fb;
+}
+.design-thumb img, .design-preview img { display: block; width: 100%; height: 96px; object-fit: cover; }
+.design-thumb__remove {
+  display: flex; align-items: center; gap: 4px; justify-content: center;
+  font-size: .74rem; padding: 4px; background: #fff; color: #b91c1c;
+}
+.design-upload { display: inline-flex; align-items: center; gap: 6px; }
+.design-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.design-bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+
+/* ------------------------------------------------- result toolbar -------- */
+.preview-toolbar {
+  display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  padding: 10px 0;
+}
+
+/* ------------------------------------------------- poster ---------------- */
+.design-stage { display: flex; justify-content: center; padding: 8px 0 20px; }
+.design-poster {
+  container-type: inline-size;
+  width: 100%; max-width: 620px; margin: 0 auto;
+  aspect-ratio: var(--aspect, 0.7071);
+  display: flex; flex-direction: column; overflow: hidden;
+  border-radius: 10px; box-shadow: 0 8px 26px rgba(15,37,69,.18);
+  background: linear-gradient(180deg, var(--pg-bg1), var(--pg-bg2));
+}
+.dp-block { overflow: hidden; min-height: 0; }
+.dp-header {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 3cqw 5cqw;
+}
+.dp-title { margin: 0; font-size: 8cqw; line-height: 1.05; font-weight: 800; letter-spacing: .2px; }
+.dp-sub { margin: 1.4cqw 0 0; font-size: 3.6cqw; font-weight: 600; opacity: .95; }
+.dp-info { padding: 2.4cqw 6cqw; display: flex; flex-direction: column; justify-content: center; gap: 1.6cqw; }
+.dp-row { display: flex; flex-direction: column; }
+.dp-label { font-size: 2.2cqw; text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
+.dp-value { font-size: 3.4cqw; line-height: 1.2; font-weight: 600; }
+.dp-paragraph { padding: 2cqw 6cqw; }
+.dp-heading { margin: 0 0 1cqw; font-size: 2.6cqw; text-transform: uppercase; letter-spacing: .6px; }
+.dp-text { margin: 0; font-size: 3.2cqw; line-height: 1.3; }
+.dp-gallery { display: grid; gap: 2cqw; padding: 2cqw 5cqw; align-content: center; }
+.dp-photo { margin: 0; border-radius: 1.6cqw; overflow: hidden; background: rgba(0,0,0,.06); }
+.dp-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.dp-footer {
+  display: flex; align-items: center; justify-content: center; gap: 3cqw;
+  font-size: 2.6cqw; font-weight: 700; letter-spacing: .4px; padding: 1.4cqw 4cqw;
+}
+
+/* ------------------------------------------------- print ----------------- */
+@media print {
+  @page { margin: 0; }
+  .appbar, .appfooter, .preview-toolbar, .no-print, .sheet-doc__hint { display: none !important; }
+  .page-design .app__main { padding: 0; }
+  .design-stage { padding: 0; }
+  .design-poster {
+    width: 100%; max-width: none; aspect-ratio: auto; height: 100vh;
+    border-radius: 0; box-shadow: none;
+  }
+  body { background: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .design-cat:active { transform: none; }
+}

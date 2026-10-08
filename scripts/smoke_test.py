@@ -78,18 +78,26 @@ def main() -> int:
     client = app.test_client()
 
     routes = ["/", "/about", "/health", "/cv", "/letters", "/documents",
-              "/school", "/business", "/passport", "/saved", "/templates",
-              "/settings", "/official-services"]
+              "/school", "/business", "/graphic-design", "/saved",
+              "/templates", "/settings", "/official-services"]
     for route in routes:
         resp = client.get(route)
         check(f"GET {route} -> 200", resp.status_code == 200,
               f"status {resp.status_code}")
 
+    # The old Passport Photo placeholder is now the Graphic Design workspace;
+    # its old URL still resolves (redirect), so nothing links to a dead route.
+    legacy = client.get("/passport")
+    check("GET /passport -> redirects to /graphic-design",
+          legacy.status_code in (301, 302) and
+          "/graphic-design" in legacy.headers.get("Location", ""),
+          f"status {legacy.status_code} -> {legacy.headers.get('Location')}")
+
     home = client.get("/").get_data(as_text=True)
     check("Dashboard shows company name", "DERB FINANCE CONCEPTS" in home)
     check("Dashboard shows product name", "DERB MOBILE" in home)
     for title in ("CV / Resume", "Letters", "Documents", "School Documents",
-                  "Business Documents", "Passport Photos", "Saved Work",
+                  "Business Documents", "Graphic Design", "Saved Work",
                   "Templates", "Settings", "Official Services"):
         check(f"Dashboard tile: {title}", title in home)
 

@@ -45,11 +45,13 @@
 <article class="saved-item">
   <div class="saved-item__top">
     <span class="saved-item__avatar" style="background: {{ item.template.accent }}">
-      {% if item.is_document %}{{ icon('document', 20) }}{% else %}{{ item.initials }}{% endif %}
+      {% if item.is_design %}{{ icon('design', 20) }}{% elif item.is_document %}{{ icon('document', 20) }}{% else %}{{ item.initials }}{% endif %}
     </span>
     <div style="min-width:0;flex:1">
       <p class="saved-item__name">
-        {% if item.is_document %}
+        {% if item.is_design %}
+          {{ item.project.title or item.project.customer_name or 'Untitled Design' }}
+        {% elif item.is_document %}
           {{ item.doc_payload.title or item.project.title or 'Untitled Document' }}
         {% else %}
           {{ item.project.customer_name }}
@@ -57,13 +59,16 @@
       </p>
       <p class="saved-item__meta">
         {{ item.project.doc_type }} &middot; {{ item.template.name }}
-        {% if not item.is_document and item.has_photo %} &middot; Photo{% endif %}
+        {% if item.has_photo %} &middot; {{ 'Images' if item.is_design else 'Photo' }}{% endif %}
       </p>
     </div>
   </div>
 
   <div class="saved-item__stats">
-    {% if item.is_document %}
+    {% if item.is_design %}
+    <span class="saved-tag">Fields: {{ item.counts.fields }}</span>
+    <span class="saved-tag">Images: {{ item.counts.images }}</span>
+    {% elif item.is_document %}
     <span class="saved-tag">Lines: {{ item.counts.lines }}</span>
     <span class="saved-tag">Words: {{ item.counts.words }}</span>
     {% else %}
@@ -76,7 +81,14 @@
   </div>
 
   <div class="saved-item__actions">
-    {% if item.is_document %}
+    {% if item.is_design %}
+    <a class="btn btn--primary" href="{{ url_for('design.edit', design_id=item.project.id) }}">Open / Edit</a>
+    <a class="btn btn--ghost" href="{{ url_for('design.preview', design_id=item.project.id) }}">Preview &amp; Export</a>
+    <form method="post" action="{{ url_for('design.delete', design_id=item.project.id) }}"
+          onsubmit="return confirm('Delete this design? This cannot be undone.');">
+      <button class="btn btn--danger" type="submit">Delete</button>
+    </form>
+    {% elif item.is_document %}
     <a class="btn btn--primary" href="{{ url_for('documents.edit', document_id=item.project.id) }}">Open / Edit</a>
     <a class="btn btn--ghost" href="{{ url_for('documents.preview', document_id=item.project.id) }}">Preview</a>
     <form method="post" action="{{ url_for('documents.export_pdf', document_id=item.project.id) }}">
@@ -115,9 +127,9 @@
       {% if query %}
         No saved projects match &ldquo;{{ query }}&rdquo;. Try a different name.
       {% else %}
-        No saved work yet. Open <strong>CV / Resume</strong>, <strong>Letters</strong>
-        or the free-format <strong>Document</strong> editor and press
-        <strong>Save</strong>.
+        No saved work yet. Open <strong>CV / Resume</strong>, <strong>Letters</strong>,
+        the free-format <strong>Document</strong> editor or <strong>Graphic Design</strong>
+        and press <strong>Save</strong>.
       {% endif %}
     </p>
   </div>
@@ -126,6 +138,9 @@
     <a class="btn btn--primary" href="{{ url_for('cv.templates') }}">Create a CV</a>
     <a class="btn btn--ghost" href="{{ url_for('documents.new') }}">
       {{ icon('document', 18) }} Type a Document
+    </a>
+    <a class="btn btn--ghost" href="{{ url_for('design.index') }}">
+      {{ icon('design', 18) }} Create a Design
     </a>
   </div>
   {% endif %}

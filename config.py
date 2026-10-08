@@ -15,8 +15,10 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_PATH = DATA_DIR / "derb.db"
 PHOTOS_DIR = DATA_DIR / "photos"
+# Graphic Design uploads (multiple images per job) live beside the database.
+DESIGN_IMAGES_DIR = DATA_DIR / "design_images"
 
-# Passport photographs are stored locally next to the database.
+# Passport photographs and design images are stored locally next to the DB.
 ALLOWED_PHOTO_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 
 # Local document tree (the folder structure the operator transfers to a PC).

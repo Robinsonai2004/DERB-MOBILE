@@ -26,7 +26,8 @@ DOC_TREE = {
     "documents": ("Documents",),
     "school": ("School",),
     "business": ("Business",),
-    "passport": ("Passport",),
+    "passport": ("Passport",),   # legacy key kept (folder + smoke test)
+    "designs": ("Designs",),     # Graphic Design output (PNG/JPG/PDF)
     "templates": ("Templates",),
 }
 

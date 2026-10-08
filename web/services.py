@@ -9,7 +9,7 @@ says so.
 
 from __future__ import annotations
 
-from flask import Blueprint, abort, render_template
+from flask import Blueprint, abort, redirect, render_template, url_for
 
 # Imported under an alias: the route below is also called official_services(),
 # so a plain import would be shadowed by the view function.
@@ -44,9 +44,12 @@ def business():
     return _render("business")
 
 
+# The old Passport Photo placeholder is now the Graphic Design workspace.
+# Keep the old URL working (nothing links to a dead route), but there is only
+# ONE workspace: /graphic-design. See docs/DECISIONS.md.
 @bp.route("/passport")
 def passport():
-    return _render("passport")
+    return redirect(url_for("design.index"), code=302)
 
 
 @bp.route("/templates")

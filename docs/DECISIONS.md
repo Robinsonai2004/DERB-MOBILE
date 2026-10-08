@@ -123,7 +123,47 @@ have flattened a meaningful distinction. A save posted against a foreign
 `doc_type` id never overwrites that row - it creates a new document instead
 (covered by the test).
 
-## 8. Accessibility from the start
+## 8. Graphic Design reuses the empty Passport Photo slot (Phase 8)
+
+**The need:** an operator tool to turn a customer's flyer/anniversary/
+certificate request into a finished design fast - not a customer-facing Canva.
+
+**Where it lives.** The dashboard's **Passport Photo** tile was inspected and
+found to be an empty placeholder (no template, no route logic, no model - it
+rendered the generic "Coming Soon" screen). So that slot was repurposed into
+the **Graphic Design** workspace: the registry entry, tile and the `/passport`
+route were reused, and `/passport` now **redirects** to `/graphic-design` so
+no old link breaks. There is deliberately only ONE design workspace - no
+duplicate tile or route. The `DERB/Passport/` folder key is kept for
+compatibility; designs write to `DERB/Designs/`.
+
+**First screen is a category grid, not a blank editor.** 15 design types live
+in `core/design_catalog.py`; each category owns its own field list (an
+Anniversary asks for a theme and anniversary number, a Certificate for an
+awardee and signatory). A new type is one catalog entry. Categories are
+marked with initials-free inline icons - no CDN, matching the rest of the app.
+
+**Generation is honest.** `core/design_generation.py` exposes a provider
+seam. The active provider is a real, deterministic **layout engine**
+(`core/design_render.py`) that produces a poster from the operator's input -
+there is NO AI provider connected, and the UI says so on every design screen
+rather than presenting a static image as AI output. Connecting a real service
+means implementing `AiDesignProvider` and flipping one flag; nothing else
+changes.
+
+**Exports under the no-image-library rule.** Design uploads are stored
+locally (`data/design_images/`, same private-store pattern as CV photos).
+Because this toolchain cannot build Pillow, the server cannot rasterize PNG/
+JPG - so JPG/PNG download is drawn on a `<canvas>` in the browser from the
+layout JSON (offline, no CDN), and PDF comes from the browser's
+Print → Save as PDF, exactly like the Document preview. The layout spec is
+shared, so preview, print and the canvas export all match.
+
+**Saved Work.** Designs persist in the same `projects` table
+(doc_type='DESIGN'), so they list beside CVs, letters and documents with no
+new storage system.
+
+## 9. Accessibility from the start
 
 Minimum 48px touch targets, `:focus-visible` outlines, `prefers-reduced-motion`
 support and safe-area insets for notched phones.
