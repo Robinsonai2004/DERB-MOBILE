@@ -71,6 +71,14 @@
       <option value="{{ slug }}" {% if slug == payload.theme %}selected{% endif %}>{{ t.name }}</option>
       {% endfor %}
     </select>
+
+    <label class="field__label" for="style">Layout style</label>
+    <select class="field__input" id="style" name="style">
+      <option value="" {% if not payload.style %}selected{% endif %}>Auto &ndash; best for this design type</option>
+      {% for slug, label in styles %}
+      <option value="{{ slug }}" {% if slug == payload.style %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
   </div>
 
   <div class="card">

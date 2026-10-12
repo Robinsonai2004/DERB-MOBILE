@@ -71,6 +71,12 @@
     <button class="btn btn--ghost" type="button" data-export="png">PNG</button>
     <button class="btn btn--ghost" type="button" data-export="jpg">JPG</button>
     <label class="field__label field__label--inline" for="theme">Style</label>
+    <select class="field__input field__input--inline" id="style" name="style">
+      {% for slug, label in styles %}
+      <option value="{{ slug }}" {% if slug == layout.template %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <label class="field__label field__label--inline" for="theme">Theme</label>
     <select class="field__input field__input--inline" id="theme" name="theme">
       {% for slug, t in themes.items() %}
       <option value="{{ slug }}" {% if slug == payload.theme %}selected{% endif %}>{{ t.name }}</option>
@@ -80,45 +86,42 @@
 
   <div class="design-stage">
     <article class="design-poster" id="design-poster"
-             style="--aspect: {{ layout.aspect }};
-                    --pg-bg1: {{ layout.palette.bg1 }};
-                    --pg-bg2: {{ layout.palette.bg2 }};
-                    --pg-accent: {{ layout.palette.accent }};
-                    --pg-ink: {{ layout.palette.ink }};
-                    --pg-muted: {{ layout.palette.muted }};
-                    --pg-band-ink: {{ layout.palette.band_ink }};">
-      {% for block in layout.blocks %}
-        {% if block.kind == 'header' %}
-        <header class="dp-block dp-header" style="flex: {{ block.flex }}; background: {{ block.fill }}; color: {{ block.ink }}">
-          <h2 class="dp-title">{{ block.title }}</h2>
-          {% if block.subtitle %}<p class="dp-sub">{{ block.subtitle }}</p>{% endif %}
-        </header>
-        {% elif block.kind == 'info' %}
-        <section class="dp-block dp-info" style="flex: {{ block.flex }}">
-          {% for row in block.rows %}
-          <div class="dp-row">
-            <span class="dp-label" style="color: {{ block.muted }}">{{ row.label }}</span>
-            <span class="dp-value" style="color: {{ block.ink }}">{{ row.value }}</span>
-          </div>
-          {% endfor %}
-        </section>
-        {% elif block.kind == 'paragraph' %}
-        <section class="dp-block dp-paragraph" style="flex: {{ block.flex }}">
-          {% if block.heading %}<h3 class="dp-heading" style="color: {{ block.muted }}">{{ block.heading }}</h3>{% endif %}
-          <p class="dp-text" style="color: {{ block.ink }}">{{ block.text }}</p>
-        </section>
-        {% elif block.kind == 'gallery' %}
-        <section class="dp-block dp-gallery" style="flex: {{ block.flex }}; grid-template-columns: repeat({{ block.columns }}, 1fr)">
-          {% for img in block.images %}
-          <figure class="dp-photo">
-            <img src="{{ url_for('design.image', filename=img.filename) }}" alt="{{ img.role }}">
-          </figure>
-          {% endfor %}
-        </section>
-        {% elif block.kind == 'footer' %}
-        <footer class="dp-block dp-footer" style="flex: {{ block.flex }}; background: {{ block.fill }}; color: {{ block.ink }}">
-          {% for line in block.lines %}<span>{{ line }}</span>{% endfor %}
-        </footer>
+             data-template="{{ layout.template }}"
+             style="--aspect: {{ layout.aspect }};">
+      {% set W = layout.width %}
+      {% set H = layout.height %}
+      {% for e in layout.elements %}
+        {% set l = '%.4f'|format(e.x / W * 100) %}
+        {% set t = '%.4f'|format(e.y / H * 100) %}
+        {% set w = '%.4f'|format(e.w / W * 100) %}
+        {% set h = '%.4f'|format(e.h / H * 100) %}
+        {% if e.kind == 'rect' %}
+        <div class="dp-el dp-rect" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+          {% if e.fill2 %}background: linear-gradient({{ e.grad_dir or 'to bottom' }}, {{ e.fill }}, {{ e.fill2 }});
+          {% else %}background: {{ e.fill }};
+          {% endif %}
+          {% if e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
+          {% if e.opacity is defined %}opacity: {{ e.opacity }};{% endif %}
+          {% if e.stroke %}border: {{ '%.4f'|format(e.stroke_w / W * 100) }}cqw solid {{ e.stroke }};{% endif %}"></div>
+        {% elif e.kind == 'ellipse' %}
+        <div class="dp-el dp-rect dp-ellipse" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+          background: {{ e.fill }};{% if e.opacity is defined %} opacity: {{ e.opacity }};{% endif %}"></div>
+        {% elif e.kind == 'photo' %}
+        <div class="dp-el dp-photo{% if e.shape == 'circle' %} dp-photo--circle{% endif %}"
+             style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+             {% if e.shape != 'circle' and e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
+             {% if e.border %}border: {{ '%.4f'|format(e.border_w / W * 100) }}cqw solid {{ e.border }};{% endif %}">
+          <img src="{{ url_for('design.image', filename=e.file) }}" alt="">
+        </div>
+        {% elif e.kind == 'text' %}
+        <div class="dp-el dp-text"
+             style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+             text-align: {{ e.align }};color: {{ e.color }};font-weight: {{ e.weight }};
+             font-size: {{ '%.4f'|format(e.size / W * 100) }}cqw;
+             line-height: {{ '%.4f'|format(e.line_h / e.size) }};
+             {% if e.tracking %}letter-spacing: {{ '%.4f'|format(e.tracking / W * 100) }}cqw;{% endif %}">
+          {% for line in e.lines %}<span class="dp-line">{{ line }}</span>{% endfor %}
+        </div>
         {% endif %}
       {% endfor %}
     </article>

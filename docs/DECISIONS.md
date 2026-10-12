@@ -143,6 +143,18 @@ Anniversary asks for a theme and anniversary number, a Certificate for an
 awardee and signatory). A new type is one catalog entry. Categories are
 marked with initials-free inline icons - no CDN, matching the rest of the app.
 
+**Five structural layouts, not a colour swap.** A theme only changes colour, so
+`core/design_render.py` grew five genuinely different compositions - **hero**
+(full-bleed photo + bottom type), **split** (photo panel + text column),
+**ornate** (symmetrical framed programme/certificate), **strip** (headline band
++ photo strip + info band) and **grid** (airy collage + type stack). The
+operator picks one, or leaves **Auto** to use the category default in
+`DEFAULT_STYLE`. Each layout is emitted as an *element list* (background, rects,
+ellipses, photos and measured text) rather than an HTML-only structure, so the
+same spec drives the HTML preview, the print dialog and the canvas PNG/JPG
+export identically. Adding a style is one `STYLES` entry plus one composition
+function; adding a design type is still one `CATEGORIES` entry.
+
 **Generation is honest.** `core/design_generation.py` exposes a provider
 seam. The active provider is a real, deterministic **layout engine**
 (`core/design_render.py`) that produces a poster from the operator's input -

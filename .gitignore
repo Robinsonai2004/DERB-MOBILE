@@ -5,12 +5,14 @@ __pycache__/
 *.pyc
 .venv/
 
-# Local database + uploaded passport photos (real customer data)
+# Local database + uploaded passport photos / design images (real customer data)
 data/derb.db
 data/derb.db-wal
 data/derb.db-shm
 data/photos/*
 !data/photos/.gitkeep
+data/design_images/*
+!data/design_images/.gitkeep
 
 # Generated customer documents (real customer data)
 DERB/CV/Projects/*
@@ -21,6 +23,7 @@ DERB/Documents/*
 DERB/School/*
 DERB/Business/*
 DERB/Passport/*
+DERB/Designs/*
 DERB/Templates/*
 !DERB/**/.gitkeep
 

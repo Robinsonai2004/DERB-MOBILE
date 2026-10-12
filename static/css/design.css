@@ -1,8 +1,9 @@
 /*
   Graphic Design workspace - DERB MOBILE.
   Follows the app design language (system fonts only, no CDN, touch-first).
-  The poster is authored with container-query units so the same markup scales
-  for the phone screen, the print dialog and the canvas export.
+  The poster renders absolute-positioned elements from the engine's spec, and
+  everything is sized in container-query units / percentages so the same
+  markup scales for the phone, the print dialog and the canvas export.
 */
 
 .page-design .app__main { padding-bottom: 96px; }
@@ -55,7 +56,7 @@
   padding: 10px 12px; border-radius: 10px; border: 1px solid #cfd6e4;
   background: #fff; font-size: 1rem; color: #1f2430;
 }
-.field__input--inline { width: auto; min-height: 40px; display: inline-block; }
+.field__input--inline { width: auto; min-height: 40px; display: inline-block; max-width: 46%; }
 .field__hint { font-size: .78rem; color: #6b7280; margin: 4px 0 8px; }
 textarea.field__input { min-height: 84px; resize: vertical; }
 .design-form .card { margin: 12px 0; }
@@ -88,33 +89,27 @@ textarea.field__input { min-height: 84px; resize: vertical; }
 .design-stage { display: flex; justify-content: center; padding: 8px 0 20px; }
 .design-poster {
   container-type: inline-size;
-  width: 100%; max-width: 620px; margin: 0 auto;
+  position: relative;
+  width: 100%; max-width: 640px; margin: 0 auto;
   aspect-ratio: var(--aspect, 0.7071);
-  display: flex; flex-direction: column; overflow: hidden;
-  border-radius: 10px; box-shadow: 0 8px 26px rgba(15,37,69,.18);
-  background: linear-gradient(180deg, var(--pg-bg1), var(--pg-bg2));
+  overflow: hidden;
+  border-radius: 10px; box-shadow: 0 8px 26px rgba(15,37,69,.22);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
 }
-.dp-block { overflow: hidden; min-height: 0; }
-.dp-header {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 3cqw 5cqw;
+.dp-el { position: absolute; box-sizing: border-box; overflow: hidden; }
+.dp-ellipse { border-radius: 50%; }
+.dp-photo { overflow: visible; }
+.dp-photo--circle { border-radius: 50%; }
+.dp-photo img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  border-radius: inherit;
 }
-.dp-title { margin: 0; font-size: 8cqw; line-height: 1.05; font-weight: 800; letter-spacing: .2px; }
-.dp-sub { margin: 1.4cqw 0 0; font-size: 3.6cqw; font-weight: 600; opacity: .95; }
-.dp-info { padding: 2.4cqw 6cqw; display: flex; flex-direction: column; justify-content: center; gap: 1.6cqw; }
-.dp-row { display: flex; flex-direction: column; }
-.dp-label { font-size: 2.2cqw; text-transform: uppercase; letter-spacing: .6px; font-weight: 700; }
-.dp-value { font-size: 3.4cqw; line-height: 1.2; font-weight: 600; }
-.dp-paragraph { padding: 2cqw 6cqw; }
-.dp-heading { margin: 0 0 1cqw; font-size: 2.6cqw; text-transform: uppercase; letter-spacing: .6px; }
-.dp-text { margin: 0; font-size: 3.2cqw; line-height: 1.3; }
-.dp-gallery { display: grid; gap: 2cqw; padding: 2cqw 5cqw; align-content: center; }
-.dp-photo { margin: 0; border-radius: 1.6cqw; overflow: hidden; background: rgba(0,0,0,.06); }
-.dp-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.dp-footer {
-  display: flex; align-items: center; justify-content: center; gap: 3cqw;
-  font-size: 2.6cqw; font-weight: 700; letter-spacing: .4px; padding: 1.4cqw 4cqw;
+.dp-text {
+  display: flex; flex-direction: column; justify-content: flex-start;
+  white-space: pre;
 }
+.dp-text .dp-line { display: block; white-space: pre; }
 
 /* ------------------------------------------------- print ----------------- */
 @media print {
@@ -123,7 +118,7 @@ textarea.field__input { min-height: 84px; resize: vertical; }
   .page-design .app__main { padding: 0; }
   .design-stage { padding: 0; }
   .design-poster {
-    width: 100%; max-width: none; aspect-ratio: auto; height: 100vh;
+    width: 100%; max-width: none; aspect-ratio: var(--aspect, 0.7071);
     border-radius: 0; box-shadow: none;
   }
   body { background: #fff; }

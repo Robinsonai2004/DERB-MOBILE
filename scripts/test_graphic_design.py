@@ -92,7 +92,8 @@ def main() -> int:
     print("Data model")
     blank = design_model.blank_payload("birthday")
     check("Blank payload keys",
-          set(blank) == {"category", "title", "fields", "instructions", "theme", "images"})
+          set(blank) == {"category", "title", "fields", "instructions", "theme",
+                         "style", "images"})
     check("Blank category applied", blank["category"] == "birthday")
     check("Blank has only the category's fields",
           set(blank["fields"]) == set(catalog.get_category("birthday").fields))
@@ -138,17 +139,60 @@ def main() -> int:
         "instructions": "Gold and white, bold choir name.",
     })
     layout = design_generation.generate_design(payload)
-    kinds = [b["kind"] for b in layout["blocks"]]
-    check("Layout has a header", "header" in kinds, str(kinds))
-    check("Layout has info rows", "info" in kinds, str(kinds))
-    check("Layout has a footer", "footer" in kinds, str(kinds))
+    kinds = [e["kind"] for e in layout["elements"]]
+    check("Layout is made of elements", set(layout) >= {"elements", "template", "palette"},
+          str(sorted(layout)))
+    check("Layout has measured text", kinds.count("text") >= 1, str(kinds))
+    check("Layout has a background", "rect" in kinds, str(kinds))
+    check("Layout names its composition", layout["template"] in dict(catalog.STYLES),
+          str(layout["template"]))
     check("Layout carries the theme palette", layout["palette"]["accent"] == "#b8860b",
           layout["palette"]["accent"])
     check("Layout aspect is portrait", abs(layout["aspect"] - 0.7071) < 0.001)
+    overflow = [e for e in layout["elements"]
+                if e["kind"] == "text" and e["y"] + e["h"] > layout["height"] + 1]
+    check("Text stays inside the poster", not overflow, f"{len(overflow)} overflowing")
     withimg = design_generation.generate_design(
         design_model.normalize({**payload, "images": [{"filename": "a.png"}]}))
-    check("Images add a gallery block",
-          any(b["kind"] == "gallery" for b in withimg["blocks"]))
+    check("Images add a photo element",
+          any(e["kind"] == "photo" for e in withimg["elements"]))
+
+    # ------------------------------------------------------------ styles
+    print("Layout styles")
+    check("Catalog defines 5 layout styles", len(catalog.STYLES) == 5,
+          str(len(catalog.STYLES)))
+    check("Style slugs unique",
+          len({s for s, _ in catalog.STYLES}) == len(catalog.STYLES))
+    check("Every style has a composition",
+          all(slug in design_render.COMPOSITIONS for slug, _ in catalog.STYLES),
+          str([s for s, _ in catalog.STYLES]))
+    check("Style names map to slugs",
+          set(catalog.STYLE_NAMES) == {s for s, _ in catalog.STYLES})
+    check("A valid style is kept",
+          design_model.normalize({**payload, "style": "split"})["style"] == "split")
+    check("An unknown style falls back to Auto",
+          design_model.normalize({**payload, "style": "bogus"})["style"] == "")
+    check("Every category has a valid default style",
+          all(design_render.DEFAULT_STYLE.get(c.slug) in design_render.COMPOSITIONS
+              for c in catalog.CATEGORIES))
+    withimage = design_model.normalize(
+        {**payload, "images": [{"filename": "a.png"}]})
+    sigs: dict[str, str] = {}
+    for slug, label in catalog.STYLES:
+        lay = design_generation.generate_design(
+            design_model.normalize({**withimage, "style": slug}))
+        sigs[slug] = json.dumps(lay["elements"], sort_keys=True)
+        check(f"Style builds a composition: {slug}", len(lay["elements"]) >= 4,
+              str(len(lay["elements"])))
+        check(f"Style reports itself: {slug}", lay["template"] == slug, lay["template"])
+        check(f"Style places the photo: {slug}",
+              any(e["kind"] == "photo" for e in lay["elements"]))
+    check("Styles are structurally different",
+          len(set(sigs.values())) == len(sigs), f"{len(set(sigs.values()))} distinct")
+    auto = design_generation.generate_design(withimage)
+    check("Auto equals the category's default style",
+          auto["template"] == design_render.DEFAULT_STYLE["anniversary"],
+          auto["template"])
 
     # --------------------------------------------------------------- store
     print("Image store")
@@ -198,6 +242,8 @@ def main() -> int:
     check("Anniversary does NOT ask for Birthday fields", "Age</label>" not in form)
     check("Form has title field", 'name="title"' in form)
     check("Form has colour theme select", 'name="theme"' in form and "Gold &amp; White" in form)
+    check("Form has a layout style select",
+          'name="style"' in form and "Hero Photo" in form and "Ornate Frame" in form)
     check("Form has multiple image upload", 'name="images"' in form and "multiple" in form)
     check("Form has Add Image affordance", "Add Image" in form)
     check("Form has instructions box", 'name="instructions"' in form)
@@ -245,6 +291,8 @@ def main() -> int:
     check("Result has a print control", 'data-role="print"' in result)
     check("Result has PNG + JPG export", 'data-export="png"' in result and 'data-export="jpg"' in result)
     check("Result embeds layout JSON for export", 'id="design-layout-json"' in result)
+    check("Result has a layout style control",
+          'name="style"' in result and "Ornate Frame" in result)
     check("Result has Regenerate + Save", "Regenerate" in result and "Save" in result)
     check("Result notes AI provider honestly",
           "not connected" in result.lower())
@@ -260,9 +308,9 @@ def main() -> int:
     # layout JSON parses and carries image urls
     jm = re.search(r'id="design-layout-json">(.*?)</script>', result, re.S)
     parsed = json.loads(jm.group(1)) if jm else {}
-    gal = [b for b in parsed.get("blocks", []) if b["kind"] == "gallery"]
-    check("Layout JSON has the gallery with a url",
-          bool(gal) and gal[0]["images"][0]["url"].startswith("/graphic-design/image/"))
+    photos = [e for e in parsed.get("elements", []) if e["kind"] == "photo"]
+    check("Layout JSON has the photo with a url",
+          bool(photos) and photos[0]["url"].startswith("/graphic-design/image/"))
 
     # ------------------------------------------------------------- save/edit
     print("Save / reopen")

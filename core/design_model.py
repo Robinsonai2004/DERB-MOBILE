@@ -61,6 +61,10 @@ def normalize(data: Any) -> dict[str, Any]:
     if theme not in catalog.THEMES:
         theme = category.theme
 
+    style = str(data.get("style") or "").strip()
+    if style not in dict(catalog.STYLES):
+        style = ""
+
     images: list[dict[str, str]] = []
     raw_images = data.get("images")
     if isinstance(raw_images, list):
@@ -82,6 +86,7 @@ def normalize(data: Any) -> dict[str, Any]:
         "fields": fields,
         "instructions": _clean_multi(data.get("instructions", ""))[:2000],
         "theme": theme,
+        "style": style,
         "images": images,
     }
 
@@ -101,6 +106,7 @@ def parse_form(form, images: list[dict[str, str]] | None = None) -> dict[str, An
             "fields": fields,
             "instructions": form.get("instructions", ""),
             "theme": form.get("theme", category.theme),
+            "style": form.get("style", ""),
             "images": images or [],
         }
     )

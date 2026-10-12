@@ -56,6 +56,17 @@ THEMES: dict[str, dict[str, str]] = {
 }
 DEFAULT_THEME = "navy-gold"
 
+# The structurally different compositions the engine can build. A style is
+# more than a colour: it changes where photos, type and decoration sit.
+STYLES: tuple[tuple[str, str], ...] = (
+    ("hero", "Hero Photo"),
+    ("split", "Split Panel"),
+    ("ornate", "Ornate Frame"),
+    ("strip", "Photo Strip"),
+    ("grid", "Clean Grid"),
+)
+STYLE_NAMES: dict[str, str] = dict(STYLES)
+
 
 # ---------------------------------------------------------------------------
 # Field definitions shared across categories (kept small on purpose).

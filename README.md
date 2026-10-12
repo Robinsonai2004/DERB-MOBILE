@@ -19,7 +19,7 @@ for printing.
 | 5 | Letters & Documents: 86 document types, 7 categories, dynamic forms, Saved Letters | **Done** |
 | 6 | Official Services: verified police/government portal links + live search | **Done** |
 | 7 | Free-format Document editor: type anything, print, PDF & DOCX export | **Done** |
-| 8 | Graphic Design workspace: 15 design types, per-type forms, image upload, layout engine, print/PNG/JPG | **Done** |
+| 8 | Graphic Design workspace: 15 design types, per-type forms, image upload, 5 layout styles, layout engine, print/PNG/JPG | **Done** |
 | 9 | Template Manager + remaining services (School, Business) | Next |
 
 > CV / Resume, Letters, the free-format Document editor, Graphic Design and
@@ -92,7 +92,7 @@ python scripts/test_exports.py           # 29 checks - CV PDF & DOCX export
 python scripts/test_letters.py           # 154 checks - letters & documents module
 python scripts/test_official_services.py # 93 checks - official services page
 python scripts/test_doc_workflow.py      # 84 checks - free-format Document editor
-python scripts/test_graphic_design.py    # 200 checks - Graphic Design workflow
+python scripts/test_graphic_design.py    # 228 checks - Graphic Design workflow
 ```
 
 The export test walks the real workflow: create project, export PDF and DOCX
@@ -184,6 +184,15 @@ DOCX export. No template or route changes needed.
 
 It appears automatically on the Graphic Design chooser, with its own form,
 layout, print, PNG and JPG export. No template or route changes needed.
+
+## Adding a new layout style later
+
+1. Add one entry to `STYLES` in `core/design_catalog.py` (a slug and a label).
+2. Add its composition function to `COMPOSITIONS` in `core/design_render.py`.
+
+A style is structural, not a colour swap: it decides where photos, type and
+decoration sit. The operator picks one on the form and the result screen, or
+leaves it on **Auto** to use the category's default in `DEFAULT_STYLE`.
 
 ## Connecting a real AI / image-generation provider
 

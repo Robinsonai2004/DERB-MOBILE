@@ -1,9 +1,11 @@
 /* DERB MOBILE - Graphic Design workspace.
    Offline only: no network calls. Handles the image preview, the print
-   button and the PNG/JPG export (drawn on a <canvas> from the layout JSON
+   button and the PNG/JPG export (drawn on a <canvas> from the element spec
    the server embeds, so the download matches the preview). */
 (function () {
   "use strict";
+
+  var FONT_STACK = 'Arial, Helvetica, sans-serif';
 
   // ----------------------------------------------------------- print ----
   document.querySelectorAll('[data-role="print"]').forEach(function (btn) {
@@ -35,49 +37,111 @@
   var dataEl = document.getElementById("design-layout-json");
   if (!dataEl) return;
 
-  function wrapLines(ctx, text, maxWidth) {
-    var lines = [];
-    (text || "").split("\n").forEach(function (para) {
-      var words = para.split(/\s+/);
-      var line = "";
-      words.forEach(function (word) {
-        var test = line ? line + " " + word : word;
-        if (ctx.measureText(test).width > maxWidth && line) {
-          lines.push(line);
-          line = word;
-        } else {
-          line = test;
-        }
-      });
-      lines.push(line);
-    });
-    return lines;
-  }
-
-  function loadImages(images, done) {
+  function loadImages(layout, done) {
     var map = {};
-    if (!images.length) { done(map); return; }
-    var remaining = images.length;
-    images.forEach(function (rec) {
+    var files = [];
+    layout.elements.forEach(function (e) {
+      if (e.kind === "photo" && e.url && files.indexOf(e.url) < 0) files.push(e.url);
+    });
+    if (!files.length) { done(map); return; }
+    var remaining = files.length;
+    files.forEach(function (url) {
       var img = new Image();
       img.onload = img.onerror = function () {
-        map[rec.filename] = img;
+        map[url] = img;
         if (--remaining === 0) done(map);
       };
-      img.src = rec.url;
+      img.src = url;
     });
   }
 
-  function drawCover(ctx, img, x, y, w, h) {
-    if (!img || !img.width) return;
-    var scale = Math.max(w / img.width, h / img.height);
-    var dw = img.width * scale;
-    var dh = img.height * scale;
-    ctx.save();
+  function path(ctx, x, y, w, h, r) {
+    if (r > 0 && ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
     ctx.beginPath();
     ctx.rect(x, y, w, h);
+  }
+
+  function fillRect(ctx, e, W) {
+    ctx.save();
+    if (e.opacity !== undefined) ctx.globalAlpha = e.opacity;
+    path(ctx, e.x, e.y, e.w, e.h, e.radius || 0);
+    if (e.fill2) {
+      var g = e.grad_dir === "to right"
+        ? ctx.createLinearGradient(e.x, 0, e.x + e.w, 0)
+        : ctx.createLinearGradient(0, e.y, 0, e.y + e.h);
+      g.addColorStop(0, e.fill);
+      g.addColorStop(1, e.fill2);
+      ctx.fillStyle = g;
+    } else {
+      ctx.fillStyle = e.fill;
+    }
+    ctx.fill();
+    if (e.stroke) {
+      ctx.lineWidth = e.stroke_w || 1;
+      ctx.strokeStyle = e.stroke;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawEllipse(ctx, e) {
+    ctx.save();
+    if (e.opacity !== undefined) ctx.globalAlpha = e.opacity;
+    ctx.beginPath();
+    ctx.ellipse(e.x + e.w / 2, e.y + e.h / 2, e.w / 2, e.h / 2, 0, 0, Math.PI * 2);
+    ctx.fillStyle = e.fill;
+    ctx.fill();
+    if (e.stroke) {
+      ctx.lineWidth = e.stroke_w || 1;
+      ctx.strokeStyle = e.stroke;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPhoto(ctx, e, images) {
+    var img = images[e.url];
+    ctx.save();
+    path(ctx, e.x, e.y, e.w, e.h, e.shape === "circle" ? Math.min(e.w, e.h) / 2 : (e.radius || 0));
     ctx.clip();
-    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    if (img && img.width) {
+      var scale = Math.max(e.w / img.width, e.h / img.height);
+      var dw = img.width * scale;
+      var dh = img.height * scale;
+      ctx.drawImage(img, e.x + (e.w - dw) / 2, e.y + (e.h - dh) / 2, dw, dh);
+    } else {
+      ctx.fillStyle = "rgba(15,37,69,.12)";
+      ctx.fillRect(e.x, e.y, e.w, e.h);
+    }
+    ctx.restore();
+    if (e.border) {
+      ctx.save();
+      ctx.lineWidth = e.border_w || 2;
+      ctx.strokeStyle = e.border;
+      path(ctx, e.x, e.y, e.w, e.h, e.shape === "circle" ? Math.min(e.w, e.h) / 2 : (e.radius || 0));
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawText(ctx, e, W) {
+    var size = e.size;
+    var lh = e.line_h || size * 1.16;
+    var half = (lh - size) / 2;
+    ctx.save();
+    ctx.fillStyle = e.color;
+    ctx.font = (e.weight === "700" || e.weight === "800" ? "bold " : "") +
+               size + "px " + FONT_STACK;
+    ctx.textAlign = e.align || "left";
+    ctx.textBaseline = "alphabetic";
+    if (e.tracking && "letterSpacing" in ctx) ctx.letterSpacing = e.tracking + "px";
+    var x = e.align === "center" ? e.x + e.w / 2
+          : e.align === "right" ? e.x + e.w
+          : e.x;
+    (e.lines || []).forEach(function (line, i) {
+      var y = e.y + half + i * lh + size * 0.80;
+      ctx.fillText(line, x, y);
+    });
     ctx.restore();
   }
 
@@ -87,101 +151,13 @@
     canvas.width = W;
     canvas.height = H;
     var ctx = canvas.getContext("2d");
-    var p = layout.palette;
-    var grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, p.bg1);
-    grad.addColorStop(1, p.bg2);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    var total = layout.blocks.reduce(function (s, b) { return s + b.flex; }, 0) || 1;
-    var y = 0;
-    layout.blocks.forEach(function (block) {
-      var h = (block.flex / total) * H;
-      drawBlock(ctx, block, 0, y, W, h, images);
-      y += h;
+    ctx.clearRect(0, 0, W, H);
+    layout.elements.forEach(function (e) {
+      if (e.kind === "rect") fillRect(ctx, e, W);
+      else if (e.kind === "ellipse") drawEllipse(ctx, e);
+      else if (e.kind === "photo") drawPhoto(ctx, e, images);
+      else if (e.kind === "text") drawText(ctx, e, W);
     });
-  }
-
-  function drawBlock(ctx, block, x, y, W, h, images) {
-    var pad = W * 0.06;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(x, y, W, h);
-    ctx.clip();
-    ctx.textBaseline = "top";
-
-    if (block.kind === "header") {
-      ctx.fillStyle = block.fill;
-      ctx.fillRect(x, y, W, h);
-      ctx.fillStyle = block.ink;
-      ctx.textAlign = "center";
-      var titleSize = W * 0.08;
-      ctx.font = "800 " + titleSize + "px system-ui, Arial, sans-serif";
-      var lines = wrapLines(ctx, block.title, W - pad * 2);
-      var lineH = titleSize * 1.08;
-      var subSize = W * 0.036;
-      var blockH = lines.length * lineH + (block.subtitle ? subSize * 1.4 : 0);
-      var ty = y + Math.max(pad * 0.6, (h - blockH) / 2);
-      lines.forEach(function (line) {
-        ctx.fillText(line, x + W / 2, ty);
-        ty += lineH;
-      });
-      if (block.subtitle) {
-        ctx.font = "600 " + subSize + "px system-ui, Arial, sans-serif";
-        ctx.fillText(block.subtitle, x + W / 2, ty);
-      }
-    } else if (block.kind === "info") {
-      ctx.textAlign = "left";
-      var ly = y + pad * 0.5;
-      block.rows.forEach(function (row) {
-        ctx.fillStyle = block.muted;
-        ctx.font = "700 " + W * 0.022 + "px system-ui, Arial, sans-serif";
-        ctx.fillText(row.label.toUpperCase(), x + pad, ly);
-        ly += W * 0.03;
-        ctx.fillStyle = block.ink;
-        ctx.font = "600 " + W * 0.034 + "px system-ui, Arial, sans-serif";
-        wrapLines(ctx, row.value, W - pad * 2).forEach(function (ln) {
-          ctx.fillText(ln, x + pad, ly);
-          ly += W * 0.042;
-        });
-        ly += W * 0.012;
-      });
-    } else if (block.kind === "paragraph") {
-      ctx.textAlign = "left";
-      var py = y + pad * 0.4;
-      if (block.heading) {
-        ctx.fillStyle = block.muted;
-        ctx.font = "700 " + W * 0.026 + "px system-ui, Arial, sans-serif";
-        ctx.fillText(block.heading.toUpperCase(), x + pad, py);
-        py += W * 0.036;
-      }
-      ctx.fillStyle = block.ink;
-      ctx.font = "400 " + W * 0.032 + "px system-ui, Arial, sans-serif";
-      wrapLines(ctx, block.text, W - pad * 2).forEach(function (ln) {
-        ctx.fillText(ln, x + pad, py);
-        py += W * 0.042;
-      });
-    } else if (block.kind === "gallery") {
-      var cols = Math.max(1, block.columns);
-      var gap = W * 0.02;
-      var cellW = (W - pad * 2 - gap * (cols - 1)) / cols;
-      var cellH = h - W * 0.04;
-      block.images.forEach(function (rec, i) {
-        var col = i % cols;
-        var rowIdx = Math.floor(i / cols);
-        drawCover(ctx, images[rec.filename], x + pad + col * (cellW + gap),
-                  y + W * 0.02 + rowIdx * (cellH + gap), cellW, cellH);
-      });
-    } else if (block.kind === "footer") {
-      ctx.fillStyle = block.fill;
-      ctx.fillRect(x, y, W, h);
-      ctx.fillStyle = block.ink;
-      ctx.textAlign = "center";
-      ctx.font = "700 " + W * 0.026 + "px system-ui, Arial, sans-serif";
-      ctx.fillText((block.lines || []).join("  ·  "), x + W / 2, y + h / 2 - W * 0.015);
-    }
-    ctx.restore();
   }
 
   function download(dataUrl, name) {
@@ -199,14 +175,13 @@
       var layout;
       try { layout = JSON.parse(dataEl.textContent); } catch (e) { return; }
       var canvas = document.getElementById("design-canvas");
-      var images = [];
-      layout.blocks.forEach(function (b) { (b.images || []).forEach(function (im) { images.push(im); }); });
+      if (!canvas) return;
       btn.disabled = true;
-      loadImages(images, function (map) {
+      loadImages(layout, function (map) {
         draw(layout, canvas, map);
         var mime = fmt === "jpg" ? "image/jpeg" : "image/png";
         var ext = fmt === "jpg" ? "jpg" : "png";
-        download(canvas.toDataURL(mime, 0.92), "derb-design." + ext);
+        download(canvas.toDataURL(mime, 0.94), "derb-design." + ext);
         btn.disabled = false;
       });
     });

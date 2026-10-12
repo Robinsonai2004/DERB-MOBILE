@@ -49,9 +49,9 @@ def _payload_of(project: dict | None) -> dict:
 def _layout_json(layout: dict) -> str:
     """Layout spec with image URLs resolved, for the canvas exporter."""
     safe = json.loads(json.dumps(layout))
-    for block in safe.get("blocks", []):
-        for img in block.get("images", []):
-            img["url"] = url_for("design.image", filename=img["filename"])
+    for el in safe.get("elements", []):
+        if el.get("kind") == "photo" and el.get("file"):
+            el["url"] = url_for("design.image", filename=el["file"])
     return json.dumps(safe)
 
 
@@ -86,6 +86,7 @@ def new():
         category=category,
         categories=catalog.CATEGORIES,
         themes=catalog.THEMES,
+        styles=catalog.STYLES,
         payload=design_model.blank_payload(category.slug),
         images=[],
         document=None,
@@ -125,6 +126,7 @@ def generate():
         service=registry.get_service("graphic-design"),
         category=catalog.get_category(payload["category"]),
         themes=catalog.THEMES,
+        styles=catalog.STYLES,
         payload=payload,
         layout=layout,
         layout_json=_layout_json(layout),
@@ -151,6 +153,7 @@ def edit_form():
         category=category,
         categories=catalog.CATEGORIES,
         themes=catalog.THEMES,
+        styles=catalog.STYLES,
         payload=payload,
         images=design_store.image_records(payload),
         document=_project(project_id) if project_id else None,
@@ -209,6 +212,7 @@ def edit(design_id: int):
         category=category,
         categories=catalog.CATEGORIES,
         themes=catalog.THEMES,
+        styles=catalog.STYLES,
         payload=payload,
         images=design_store.image_records(payload),
         document=project,
@@ -229,6 +233,7 @@ def preview(design_id: int):
         service=registry.get_service("graphic-design"),
         category=catalog.get_category(payload["category"]),
         themes=catalog.THEMES,
+        styles=catalog.STYLES,
         payload=payload,
         layout=layout,
         layout_json=_layout_json(layout),
