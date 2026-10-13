@@ -57,9 +57,9 @@ def templates():
     return _render("templates")
 
 
-@bp.route("/settings")
-def settings():
-    return _render("settings")
+# NOTE: /settings has its own blueprint (web/settings.py) because it is a real
+# screen now - it owns the "Switch to AI Features" preference that the Graphic
+# Design workspace reads. See docs/DECISIONS.md.
 
 
 @bp.route("/official-services")

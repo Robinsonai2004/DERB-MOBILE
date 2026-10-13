@@ -78,6 +78,7 @@ textarea.field__input { min-height: 84px; resize: vertical; }
 .design-upload { display: inline-flex; align-items: center; gap: 6px; }
 .design-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
 .design-bar { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+.btn--small { min-height: 40px; font-size: 13px; padding: 0 12px; }
 
 /* ------------------------------------------------- result toolbar -------- */
 .preview-toolbar {
@@ -110,6 +111,53 @@ textarea.field__input { min-height: 84px; resize: vertical; }
   white-space: pre;
 }
 .dp-text .dp-line { display: block; white-space: pre; }
+
+/* --------------------------------------------------- flash messages ----- */
+.flash {
+  margin: 12px 16px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  background: #ecfdf3;
+  color: #05603a;
+  border: 1px solid #c9ecd8;
+}
+.flash--error { background: #fef3f2; color: #b42318; border-color: #fecdc9; }
+
+/* ----------------------------------------------------- AI panel / review - */
+.ai-panel { border-left: 4px solid #0f766e; }
+.ai-panel .card__title { display: flex; align-items: center; gap: 8px; }
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: #0f766e;
+  background: #e6f6f2; border-radius: 999px; padding: 4px 10px;
+}
+.ai-review {
+  margin: 12px 0; padding: 13px 14px;
+  border-radius: 14px; border: 1px solid #bfe4da;
+  background: linear-gradient(180deg, #f2fbf9, #e9f7f4);
+}
+.ai-review__title { margin: 8px 0 5px; font-size: 1.02rem; color: #0b2545; }
+.ai-review__text { margin: 0; font-size: .84rem; color: #33415c; line-height: 1.5; }
+.ai-review__prompt {
+  margin: 8px 0 0; font-size: .8rem; color: #33415c;
+  background: rgba(255,255,255,.7); border-radius: 8px; padding: 7px 9px;
+}
+.ai-review__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ai-accepted {
+  margin: 12px 0; padding: 12px 14px;
+  border-radius: 14px; border: 1px solid #bfe4da; background: #f2fbf9;
+}
+.ai-accepted__text { margin: 8px 0 10px; font-size: .84rem; color: #33415c; line-height: 1.5; }
+
+/* ------------------------------------------- compare with the original -- */
+.design-stage--compare { flex-direction: column; align-items: center; gap: 8px; }
+.design-stage__caption {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .78rem; color: #5a6472; margin: 0;
+}
+.design-poster--small { max-width: 320px; }
 
 /* ------------------------------------------------- print ----------------- */
 @media print {

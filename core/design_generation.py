@@ -1,20 +1,21 @@
 """
 Design generation service for DERB MOBILE.
 
-This module is the ONE place that knows how a design is produced, so a real
-image-generation / AI design service can be connected later without touching
-the UI or the route layer.
+This module is the ONE place that knows how a design is produced, so the UI and
+the route layer never care which engine ran.
 
-Two providers exist:
+Two engines exist, and the app never confuses them:
 
 * ``TemplateDesignProvider`` (active) - a real, offline, deterministic layout
   engine (core/design_render.py). It genuinely turns the operator's content
   into a finished poster. This is NOT presented as AI.
-* ``AiDesignProvider`` (NOT configured) - a stub that documents exactly where a
-  remote image/AI provider (and its API key) plugs in. It raises until wired,
-  so the app never pretends an AI image was generated.
+* The **AI finishing** path - core/ai_service.py. It talks to a real remote
+  image provider, but only to produce *background artwork*; the layout engine
+  above always re-draws the customer's text and photos on top of it, so an
+  image model can never silently change a name, date or phone number.
 
-``provider_status()`` returns the honest state the UI shows the operator.
+``provider_status()`` returns the honest state the UI shows the operator,
+including whether AI finishing is off, not configured, unavailable or ready.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from core import design_render
+from core import ai_service, design_render
 
 
 class GenerationNotConfigured(RuntimeError):
@@ -49,31 +50,7 @@ class TemplateDesignProvider:
         return design_render.build_layout(payload)
 
 
-class AiDesignProvider:
-    """Seam for a real remote image/AI design provider.
-
-    To connect a provider:
-      1. Add its HTTP client + API key here (read the key from config/env).
-      2. Implement ``generate`` to POST the payload and either return image
-         bytes to embed, or a layout spec this app can render.
-      3. Flip ``configured`` to True and set a real ``label``.
-
-    Until then the UI must keep telling the operator that AI generation is not
-    connected - never substitute a static image and call it AI.
-    """
-
-    slug = "ai-remote"
-    label = "AI image provider (not connected)"
-    configured = False
-
-    def generate(self, payload: dict[str, Any]) -> dict[str, Any]:
-        raise GenerationNotConfigured(
-            "No AI/image generation provider is configured. Set one up in "
-            "core/design_generation.py and provide its API key."
-        )
-
-
-# The provider the app currently uses. Everything below reads from this.
+# The provider the app currently uses for layout. Everything below reads this.
 _ACTIVE: DesignProvider = TemplateDesignProvider()
 
 
@@ -86,22 +63,44 @@ def generate_design(payload: dict[str, Any]) -> dict[str, Any]:
     return get_provider().generate(payload)
 
 
+def ai_status() -> dict[str, Any]:
+    """Honest AI-features status (see core/ai_service.status)."""
+    return ai_service.status()
+
+
+def ai_provider_configured() -> bool:
+    """True only when an AI provider API key is actually available.
+
+    Read from the environment on every call - never hard-coded - so the UI can
+    never claim AI is connected when it is not, and never hides it when it is.
+    """
+    return ai_service.load_config().configured
+
+
 def provider_status() -> dict[str, Any]:
-    """Honest, user-facing description of the active generation provider."""
-    provider = get_provider()
+    """Honest, user-facing description of design generation on this device."""
+    state = ai_status()
+    if state["state"] == "enabled":
+        ai_note = ("AI finishing is switched on and a provider is configured. "
+                   "In Graphic Design you can describe an improvement and let "
+                   "the AI paint a new background; your text and photos are "
+                   "always re-drawn by the built-in engine.")
+    elif state["state"] == "not_configured":
+        ai_note = ("AI finishing is switched on in Settings, but no provider "
+                   "API key is configured on this device yet - so it cannot "
+                   "run. The built-in layout engine is used instead.")
+    elif state["state"] == "unavailable":
+        ai_note = ("AI finishing is switched on but the provider could not be "
+                   "reached on the last attempt. The built-in layout engine "
+                   "still produces your design.")
+    else:
+        ai_note = ("AI finishing is switched off. Designs are produced by the "
+                   "built-in DERB layout engine from the information and images "
+                   "you enter. Turn AI on in Settings if you want it.")
     return {
-        "configured": provider.configured,
-        "provider": provider.slug,
-        "label": provider.label,
-        "note": (
-            "Designs are produced by the built-in DERB layout engine from the "
-            "information and images you enter. A real AI/image generation "
-            "provider is not connected yet - it plugs in at "
-            "core/design_generation.py when you have one."
-        ),
+        "configured": get_provider().configured,
+        "provider": get_provider().slug,
+        "label": get_provider().label,
+        "note": ai_note,
+        "ai": state,
     }
-
-
-# Exposed so tests and the UI can assert the AI provider is honestly reported
-# as unconfigured rather than faked.
-AI_PROVIDER_CONFIGURED = AiDesignProvider.configured

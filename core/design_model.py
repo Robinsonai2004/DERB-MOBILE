@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 from core import design_catalog as catalog
-from core import doc_model, paths
+from core import design_store, doc_model, paths
 
 MAX_IMAGES = 8
 
@@ -80,6 +80,23 @@ def normalize(data: Any) -> dict[str, Any]:
             })
     images = images[:MAX_IMAGES]
 
+    # An accepted AI background is part of the design from now on: it survives
+    # save, reopen, regenerate and export. The original uploads are untouched,
+    # so "remove AI background" can always restore the plain composition.
+    raw_ai = data.get("ai")
+    if not isinstance(raw_ai, dict):
+        raw_ai = {}
+    background = str(raw_ai.get("background") or "").strip()
+    ai: dict[str, str] = {}
+    if background and design_store.is_safe_name(background):
+        ai = {
+            "background": background,
+            "prompt": _clean_multi(raw_ai.get("prompt", ""))[:600],
+            "provider": _clean_single(raw_ai.get("provider", ""))[:60],
+            "model": _clean_single(raw_ai.get("model", ""))[:60],
+            "created_at": _clean_single(raw_ai.get("created_at", ""))[:32],
+        }
+
     return {
         "category": category.slug,
         "title": _clean_single(data.get("title", ""))[:120],
@@ -88,6 +105,7 @@ def normalize(data: Any) -> dict[str, Any]:
         "theme": theme,
         "style": style,
         "images": images,
+        "ai": ai,
     }
 
 
@@ -96,6 +114,8 @@ def parse_form(form, images: list[dict[str, str]] | None = None) -> dict[str, An
 
     ``images`` is the already-stored image list (the form only carries the
     filenames as hidden fields, since the files were uploaded on Generate).
+    Every design screen re-posts the accepted AI background through hidden
+    fields, so regenerating or editing never silently drops it.
     """
     category = catalog.get_category(form.get("category")) or catalog.CATEGORIES[0]
     fields = {key: form.get(key, "") for key in category.fields}
@@ -108,8 +128,27 @@ def parse_form(form, images: list[dict[str, str]] | None = None) -> dict[str, An
             "theme": form.get("theme", category.theme),
             "style": form.get("style", ""),
             "images": images or [],
+            "ai": {
+                "background": form.get("ai_background", ""),
+                "prompt": form.get("ai_prompt", ""),
+                "provider": form.get("ai_provider", ""),
+                "model": form.get("ai_model", ""),
+                "created_at": form.get("ai_created_at", ""),
+            },
         }
     )
+
+
+def ai_background(payload: dict[str, Any]) -> str:
+    """Accepted AI background filename, or '' when the design has none."""
+    ai = payload.get("ai")
+    if not isinstance(ai, dict):
+        return ""
+    return str(ai.get("background") or "")
+
+
+def has_ai(payload: dict[str, Any]) -> bool:
+    return bool(ai_background(payload))
 
 
 # ---------------------------------------------------------------------------

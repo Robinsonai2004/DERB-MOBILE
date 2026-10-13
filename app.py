@@ -18,6 +18,13 @@ import sys
 import config
 from web import create_app
 
+# Pick up a local, gitignored settings file if the operator created one (see
+# README -> "Connecting an AI provider"). Only the KEY NAMES are reported, so a
+# secret can never be printed to the console.
+_loaded = config.load_local_env()
+if _loaded:
+    print(f"  Loaded local settings from .env / .env.local: {', '.join(_loaded)}")
+
 app = create_app()
 
 

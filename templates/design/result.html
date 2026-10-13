@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/icons.html" import icon %}
+{% from "design/_poster.html" import poster %}
 
 {% block title %}{{ payload.title or 'Design' }}{% endblock %}
 {% block body_class %}page-design page-design-result{% endblock %}
@@ -36,6 +37,16 @@
 </div>
 {% endif %}
 
+{% if ai_error %}
+<section class="section no-print">
+  <div class="notice notice--amber">
+    {{ icon('info', 18, 'notice__icon') }}
+    <p><strong>The AI request did not complete, so your design is unchanged.</strong>
+      {{ ai_error }}</p>
+  </div>
+</section>
+{% endif %}
+
 <form method="post" enctype="multipart/form-data" id="design-result-form"
       action="{{ url_for('design.generate') }}">
   <input type="hidden" name="category" value="{{ payload.category }}">
@@ -49,7 +60,79 @@
   <input type="hidden" name="image_filename" value="{{ img.filename }}">
   {% endfor %}
 
+  {# An accepted AI background travels with every post, so editing the design,
+     regenerating it or trying another variation never silently drops it. #}
+  {% set ai_post = review if review else payload.ai %}
+  {% if ai_post and ai_post.background %}
+  <input type="hidden" name="ai_background" value="{{ ai_post.background }}">
+  <input type="hidden" name="ai_prompt" value="{{ ai_post.prompt }}">
+  <input type="hidden" name="ai_provider" value="{{ ai_post.provider }}">
+  <input type="hidden" name="ai_model" value="{{ ai_post.model }}">
+  <input type="hidden" name="ai_created_at" value="{{ ai_post.created_at }}">
+  {% endif %}
+  {% if review %}
+  {# What this design looked like before this AI attempt - restored on reject. #}
+  <input type="hidden" name="ai_original_background" value="{{ payload.ai.background or '' }}">
+  {% endif %}
+
+  {# ------------------------------------------------ AI review banner ---- #}
+  {% if review %}
+  <section class="ai-review no-print">
+    <span class="ai-badge">{{ icon('design', 14) }} AI background ready</span>
+    <h2 class="ai-review__title">Review the AI result</h2>
+    <p class="ai-review__text">
+      The AI painted a new background for
+      <strong>{{ payload.title or (category.name if category else 'this design') }}</strong>.
+      Your text and photos are re-drawn on top of it by DERB&rsquo;s own layout
+      engine, so nothing you entered has been changed. Nothing is saved until
+      you accept.
+    </p>
+    {% if review.prompt %}
+    <p class="ai-review__prompt"><strong>Your instruction:</strong> {{ review.prompt }}</p>
+    {% endif %}
+    <div class="ai-review__actions">
+      <button class="btn btn--primary" type="submit"
+              formaction="{{ url_for('design.ai_accept') }}">
+        {{ icon('check', 16) }} Accept &amp; save
+      </button>
+      {# The button names the result it replaces, so Try another can delete it. #}
+      <button class="btn btn--ghost" type="submit"
+              name="ai_discard" value="{{ review.background }}"
+              formaction="{{ url_for('design.ai_finish') }}">
+        {{ icon('design', 16) }} Try another
+      </button>
+      <button class="btn btn--ghost" type="submit"
+              formaction="{{ url_for('design.ai_reject') }}">
+        {{ icon('back', 16) }} Reject
+      </button>
+    </div>
+  </section>
+  {% elif payload.ai.background %}
+  <section class="ai-accepted no-print">
+    <span class="ai-badge">{{ icon('check', 14) }} AI background accepted</span>
+    <p class="ai-accepted__text">
+      This design uses an AI-finished background. The customer&rsquo;s text and
+      photos are still drawn by DERB&rsquo;s layout engine, so print and export
+      behave exactly as before.
+    </p>
+    {% if document %}
+    <button class="btn btn--ghost" type="submit"
+            formaction="{{ url_for('design.ai_remove', design_id=document.id) }}">
+      {{ icon('back', 16) }} Remove AI background
+    </button>
+    {% else %}
+    <button class="btn btn--ghost" type="button" disabled>
+      {{ icon('back', 16) }} Remove AI background
+    </button>
+    {% endif %}
+  </section>
+  {% endif %}
+
   <div class="preview-toolbar no-print">
+    {% if review %}
+    <p class="preview-toolbar__hint">Accept, reject or try another result before
+      editing or saving.</p>
+    {% else %}
     {% if document %}
     <a class="btn btn--ghost" href="{{ url_for('design.edit', design_id=document.id) }}">
       {{ icon('back', 16) }} Edit
@@ -65,12 +148,13 @@
     <button class="btn btn--primary" type="submit" formaction="{{ url_for('design.save') }}">
       {{ icon('saved', 16) }} {% if document %}Update{% else %}Save{% endif %}
     </button>
+    {% endif %}
     <button class="btn btn--ghost" type="button" data-role="print">
       {{ icon('document', 16) }} Print
     </button>
     <button class="btn btn--ghost" type="button" data-export="png">PNG</button>
     <button class="btn btn--ghost" type="button" data-export="jpg">JPG</button>
-    <label class="field__label field__label--inline" for="theme">Style</label>
+    <label class="field__label field__label--inline" for="style">Style</label>
     <select class="field__input field__input--inline" id="style" name="style">
       {% for slug, label in styles %}
       <option value="{{ slug }}" {% if slug == layout.template %}selected{% endif %}>{{ label }}</option>
@@ -85,47 +169,66 @@
   </div>
 
   <div class="design-stage">
-    <article class="design-poster" id="design-poster"
-             data-template="{{ layout.template }}"
-             style="--aspect: {{ layout.aspect }};">
-      {% set W = layout.width %}
-      {% set H = layout.height %}
-      {% for e in layout.elements %}
-        {% set l = '%.4f'|format(e.x / W * 100) %}
-        {% set t = '%.4f'|format(e.y / H * 100) %}
-        {% set w = '%.4f'|format(e.w / W * 100) %}
-        {% set h = '%.4f'|format(e.h / H * 100) %}
-        {% if e.kind == 'rect' %}
-        <div class="dp-el dp-rect" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
-          {% if e.fill2 %}background: linear-gradient({{ e.grad_dir or 'to bottom' }}, {{ e.fill }}, {{ e.fill2 }});
-          {% else %}background: {{ e.fill }};
-          {% endif %}
-          {% if e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
-          {% if e.opacity is defined %}opacity: {{ e.opacity }};{% endif %}
-          {% if e.stroke %}border: {{ '%.4f'|format(e.stroke_w / W * 100) }}cqw solid {{ e.stroke }};{% endif %}"></div>
-        {% elif e.kind == 'ellipse' %}
-        <div class="dp-el dp-rect dp-ellipse" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
-          background: {{ e.fill }};{% if e.opacity is defined %} opacity: {{ e.opacity }};{% endif %}"></div>
-        {% elif e.kind == 'photo' %}
-        <div class="dp-el dp-photo{% if e.shape == 'circle' %} dp-photo--circle{% endif %}"
-             style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
-             {% if e.shape != 'circle' and e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
-             {% if e.border %}border: {{ '%.4f'|format(e.border_w / W * 100) }}cqw solid {{ e.border }};{% endif %}">
-          <img src="{{ url_for('design.image', filename=e.file) }}" alt="">
-        </div>
-        {% elif e.kind == 'text' %}
-        <div class="dp-el dp-text"
-             style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
-             text-align: {{ e.align }};color: {{ e.color }};font-weight: {{ e.weight }};
-             font-size: {{ '%.4f'|format(e.size / W * 100) }}cqw;
-             line-height: {{ '%.4f'|format(e.line_h / e.size) }};
-             {% if e.tracking %}letter-spacing: {{ '%.4f'|format(e.tracking / W * 100) }}cqw;{% endif %}">
-          {% for line in e.lines %}<span class="dp-line">{{ line }}</span>{% endfor %}
-        </div>
-        {% endif %}
-      {% endfor %}
-    </article>
+    {{ poster(layout) }}
   </div>
+
+  {% if review and original_layout %}
+  <div class="design-stage design-stage--compare no-print">
+    <p class="design-stage__caption">
+      {{ icon('info', 14, 'notice__icon') }}
+      Original design &mdash; kept until you accept
+    </p>
+    {{ poster(original_layout, 'design-poster-original', 'design-poster--small') }}
+  </div>
+  {% endif %}
+
+  {# ------------------------------------------------- Finish with AI ----- #}
+  {% if ai.usable %}
+  {% if ai.state == 'unavailable' %}
+  <section class="section no-print">
+    <div class="notice notice--amber">
+      {{ icon('info', 18, 'notice__icon') }}
+      <p>{{ ai.message }}
+        <a href="{{ url_for('settings.index') }}">Check the connection in Settings</a>,
+        or try again below.</p>
+    </div>
+  </section>
+  {% endif %}
+  <section class="ai-panel no-print">
+    <div class="section__head">
+      <h2 class="section__title">Finish with AI</h2>
+      <span class="pill pill--ready">Enabled</span>
+    </div>
+    <p class="field__hint">
+      Describe the improvement you want. The AI paints a new background, colour
+      treatment and composition; every name, date, venue and phone number is
+      re-drawn by DERB&rsquo;s own engine, so your wording is never left to the
+      image model.
+    </p>
+    <textarea class="field__input" id="ai_prompt" name="ai_prompt" rows="3" maxlength="600"
+              placeholder="e.g. Warm gold background, softer lighting, more space at the top for the title">{{ review.prompt if review else '' }}</textarea>
+    <div class="design-bar">
+      <button class="btn btn--primary" type="submit"
+              formaction="{{ url_for('design.ai_finish') }}"
+              {% if review %}name="ai_discard" value="{{ review.background }}"{% endif %}>
+        {{ icon('design', 18) }}
+        {% if review %}Try another variation{% else %}Finish with AI{% endif %}
+      </button>
+    </div>
+    <p class="field__hint">
+      AI finishing needs an internet connection and uses the API key configured
+      on this device.
+    </p>
+  </section>
+  {% elif ai.enabled %}
+  <section class="section no-print">
+    <div class="notice notice--amber">
+      {{ icon('info', 18, 'notice__icon') }}
+      <p>{{ ai.message }}
+        <a href="{{ url_for('settings.index') }}">Open Settings</a>.</p>
+    </div>
+  </section>
+  {% endif %}
 </form>
 
 <p class="sheet-doc__hint no-print">

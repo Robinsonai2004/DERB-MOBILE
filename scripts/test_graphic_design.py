@@ -23,6 +23,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -54,6 +55,7 @@ def main() -> int:
     print("-" * 58)
 
     from config import DESIGN_IMAGES_DIR
+    from core import ai_service
     from core import design_catalog as catalog
     from core import design_generation, design_model, design_render, design_store
     from core import projects_repo
@@ -66,6 +68,11 @@ def main() -> int:
 
     created_ids: list[int] = []
     created_images: list[str] = []
+
+    # The normal editor must work with AI OFF, so the whole run below is done
+    # with the switch off and the original preference restored at the end.
+    prefs_before = ai_service.preference_enabled()
+    ai_service.set_preference(False)
 
     # ------------------------------------------------------------- catalog
     print("Catalog")
@@ -93,7 +100,7 @@ def main() -> int:
     blank = design_model.blank_payload("birthday")
     check("Blank payload keys",
           set(blank) == {"category", "title", "fields", "instructions", "theme",
-                         "style", "images"})
+                         "style", "images", "ai"})
     check("Blank category applied", blank["category"] == "birthday")
     check("Blank has only the category's fields",
           set(blank["fields"]) == set(catalog.get_category("birthday").fields))
@@ -126,11 +133,18 @@ def main() -> int:
     # ----------------------------------------------------------- generation
     print("Generation architecture")
     status = design_generation.provider_status()
-    check("Active provider is configured", status["configured"] is True, str(status))
-    check("AI provider reported as NOT configured",
-          design_generation.AI_PROVIDER_CONFIGURED is False)
-    check("Provider note tells the operator AI is not connected",
-          "not connected" in status["note"].lower() or "not connected" in status["note"])
+    check("Active layout provider is configured", status["configured"] is True, str(status))
+    check("AI status is read from the environment (never hard-coded)",
+          design_generation.ai_provider_configured()
+          == bool(os.environ.get("DERB_AI_API_KEY", "").strip()))
+    check("Provider note is honest about the built-in layout engine",
+          "layout engine" in status["note"].lower())
+    check("Provider status carries the AI feature state",
+          status["ai"]["state"] in {"disabled", "not_configured", "unavailable",
+                                     "enabled"}, str(status.get("ai")))
+    check("AI is off for this run, so the plain editor is being tested",
+          design_generation.ai_status()["state"] == "disabled",
+          design_generation.ai_status()["state"])
     payload = design_model.normalize({
         "category": "anniversary", "title": "CAC Choir 10th Anniversary",
         "theme": "gold-white",
@@ -294,8 +308,12 @@ def main() -> int:
     check("Result has a layout style control",
           'name="style"' in result and "Ornate Frame" in result)
     check("Result has Regenerate + Save", "Regenerate" in result and "Save" in result)
-    check("Result notes AI provider honestly",
-          "not connected" in result.lower())
+    check("Result states the generation story honestly",
+          "layout engine" in result.lower())
+    check("With AI off the editor offers no AI action",
+          "Finish with AI" not in result)
+    check("With AI off the editor offers no AI prompt box",
+          'name="ai_prompt"' not in result)
 
     m = re.search(r'name="image_filename" value="(design_[0-9a-f]+\.png)"', result)
     check("Uploaded image kept in the result", bool(m))
@@ -404,6 +422,9 @@ def main() -> int:
     deleted_files = [n for n in created_images if (DESIGN_IMAGES_DIR / n).exists()]
     check("Test images removed", not deleted_files, str(deleted_files))
     check("No test projects left", projects_repo.get_project(design_id) is None)
+    ai_service.set_preference(prefs_before)
+    check("AI preference restored after the run",
+          ai_service.preference_enabled() == prefs_before)
 
     print("-" * 58)
     print(f"{passes} passed, {len(failures)} failed")

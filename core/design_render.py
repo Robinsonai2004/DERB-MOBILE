@@ -38,6 +38,11 @@ FONT_SAFETY = 1.12
 LINE_HEIGHT = 1.16
 MAX_IMAGES = 4
 
+# How much of the theme background is laid over accepted AI artwork. The image
+# model is asked for artwork with no text at all, so the engine keeps drawing
+# every piece of customer text on top; this tint keeps that text readable.
+AI_SCRIM = 0.72
+
 
 # ---------------------------------------------------------------------------
 # Text metrics / fitting
@@ -152,6 +157,22 @@ def photo_el(x, y, w, h, filename, *, shape="rect", radius=0.0, border=None,
             "w": round(w, 1), "h": round(h, 1), "file": filename,
             "shape": shape, "radius": round(radius, 1),
             "border": border, "border_w": round(border_w, 1)}
+
+
+def _base(ctx: dict) -> list[dict]:
+    """The composition's background layer.
+
+    When the operator has accepted an AI backdrop it is drawn full-bleed with
+    a theme-tinted scrim; otherwise the theme gradient is used, exactly as
+    before. Everything the composition places afterwards (text, photos,
+    decoration) is unaffected either way.
+    """
+    W, H, pal = ctx["W"], ctx["H"], ctx["pal"]
+    bg = ctx.get("bg")
+    if bg:
+        return [photo_el(0, 0, W, H, bg),
+                rect(0, 0, W, H, pal["bg1"], opacity=AI_SCRIM)]
+    return [rect(0, 0, W, H, pal["bg1"], fill2=pal["bg2"])]
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +328,13 @@ def _comp_hero(ctx: dict) -> list[dict]:
     W, H, pal, c = ctx["W"], ctx["H"], ctx["pal"], ctx["c"]
     els: list[dict] = []
 
-    if c["photos"]:
+    if ctx.get("bg"):
+        # Accepted AI artwork becomes the full-bleed backdrop, and the
+        # customer's own photo is framed on top of it rather than replaced.
+        els.append(photo_el(0, 0, W, H, ctx["bg"]))
+        els.append(rect(0, H * 0.30, W, H * 0.70, "#04101f", opacity=0.60))
+        els.append(rect(0, 0, W, H * 0.34, "#04101f", fill2="#04101f", opacity=0.34))
+    elif c["photos"]:
         els.append(photo_el(0, 0, W, H, c["photos"][0]))
         els.append(rect(0, H * 0.30, W, H * 0.70, "#04101f", opacity=0.55))
         els.append(rect(0, 0, W, H * 0.30, "#04101f", fill2="#04101f", opacity=0.30))
@@ -324,6 +351,15 @@ def _comp_hero(ctx: dict) -> list[dict]:
     max_w = W - pad * 2
     bottom = H - H * 0.06
 
+    # Hero already uses its photo as the backdrop; with an AI backdrop that
+    # photo is framed in the quiet upper band so it is still part of the job.
+    framed = bool(ctx.get("bg")) and bool(c["photos"])
+    if framed:
+        d = W * 0.32
+        els.append(photo_el(W - d - pad, H * 0.055, d, d * 1.12,
+                            c["photos"][0], radius=W * 0.018, border=accent,
+                            border_w=W * 0.005))
+
     # measure bottom-up so the stack never collides
     blocks: list[tuple[str, ...]] = []
     if c["sub"]:
@@ -339,7 +375,7 @@ def _comp_hero(ctx: dict) -> list[dict]:
     sizes = {"headline": W * 0.115, "name": W * 0.145, "sub": W * 0.052}
     min_sizes = {"headline": W * 0.05, "name": W * 0.058, "sub": W * 0.03}
     info_floor = W * 0.026
-    top_limit = H * 0.06
+    top_limit = H * 0.44 if framed else H * 0.06
     avail = bottom - top_limit
 
     heights: dict[str, float] = {}
@@ -411,7 +447,7 @@ def _comp_split(ctx: dict) -> list[dict]:
     """Photo panel + text column with an accent rule."""
     W, H, pal, c = ctx["W"], ctx["H"], ctx["pal"], ctx["c"]
     els: list[dict] = []
-    els.append(rect(0, 0, W, H, pal["bg1"], fill2=pal["bg2"]))
+    els += _base(ctx)
 
     wide = W > H
     pad = W * 0.07
@@ -496,7 +532,7 @@ def _comp_ornate(ctx: dict) -> list[dict]:
     """Symmetrical framed composition - programmes, certificates, invites."""
     W, H, pal, c = ctx["W"], ctx["H"], ctx["pal"], ctx["c"]
     els: list[dict] = []
-    els.append(rect(0, 0, W, H, pal["bg1"], fill2=pal["bg2"]))
+    els += _base(ctx)
     accent = pal["accent"]
 
     m = W * 0.045
@@ -566,7 +602,7 @@ def _comp_strip(ctx: dict) -> list[dict]:
     """Headline band, photo strip, then a tight information row."""
     W, H, pal, c = ctx["W"], ctx["H"], ctx["pal"], ctx["c"]
     els: list[dict] = []
-    els.append(rect(0, 0, W, H, pal["bg1"], fill2=pal["bg2"]))
+    els += _base(ctx)
     accent = pal["accent"]
     pad = W * 0.075
 
@@ -654,7 +690,7 @@ def _comp_grid(ctx: dict) -> list[dict]:
     W, H, pal, c = ctx["W"], ctx["H"], ctx["pal"], ctx["c"]
     els: list[dict] = []
     accent = pal["accent"]
-    els.append(rect(0, 0, W, H, pal["bg1"], fill2=pal["bg2"]))
+    els += _base(ctx)
     pad = W * 0.075
     inner = W - pad * 2
 
@@ -749,17 +785,25 @@ def build_layout(payload: dict) -> dict:
     if style not in COMPOSITIONS:
         style = DEFAULT_STYLE.get(category.slug, "grid")
 
+    # An accepted AI backdrop (payload['ai']['background']) is painted under the
+    # composition. It is a *backdrop only*: the engine still emits every text
+    # and photo element, so no customer detail can be changed or dropped by the
+    # image model. See docs/DECISIONS.md.
+    ai = payload.get("ai") if isinstance(payload.get("ai"), dict) else {}
+    bg = str((ai or {}).get("background") or "")
+
     W = EXPORT_WIDTH
     H = int(round(W / aspect))
     c = assemble(category, payload)
     ctx = {"W": W, "H": H, "pal": pal, "c": c, "category": category,
-           "style": style}
+           "style": style, "bg": bg}
     elements = COMPOSITIONS[style](ctx)
     elements = [e for e in elements if e]
 
     return {
         "aspect": aspect, "width": W, "height": H, "template": style,
         "palette": pal, "elements": elements,
+        "ai_background": bg,
         "category": {"slug": category.slug, "name": category.name},
     }
 

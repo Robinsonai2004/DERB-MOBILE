@@ -24,6 +24,49 @@ ALLOWED_PHOTO_EXT = {".jpg", ".jpeg", ".png", ".webp"}
 # Local document tree (the folder structure the operator transfers to a PC).
 DERB_ROOT = Path(os.environ.get("DERB_OUTPUT_DIR", BASE_DIR / "DERB"))
 
+# Optional, gitignored files the operator may create on the device to hold
+# local settings - typically the AI provider key, so it never has to be typed
+# into a shell command (which would land in the shell history). They are read
+# only by load_local_env(), called from app.py - never imported by the modules
+# the tests exercise, so the test suite stays hermetic.
+LOCAL_ENV_FILES = (BASE_DIR / ".env", BASE_DIR / ".env.local")
+
+
+def load_local_env(path: Path | None = None) -> list[str]:
+    """Load ``DERB_*`` settings from a local, gitignored env file.
+
+    Real environment variables always win: an explicitly exported value is
+    never overwritten, so this is a convenience for on-device setup, not a
+    second hidden configuration layer. Only keys prefixed ``DERB_`` are
+    honoured, so a stray file can never rewrite ``PATH`` or anything else.
+
+    Returns the names of the keys that were applied - never the values, so
+    callers can report what was picked up without printing a secret.
+    """
+    candidates = (path,) if path else LOCAL_ENV_FILES
+    applied: list[str] = []
+    for candidate in candidates:
+        if not candidate.is_file():
+            continue
+        try:
+            lines = candidate.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            if key.startswith("export "):
+                key = key[len("export "):].strip()
+            value = value.strip().strip('"').strip("'")
+            if not key.startswith("DERB_") or key in os.environ or not value:
+                continue
+            os.environ[key] = value
+            applied.append(key)
+    return applied
+
 # --------------------------------------------------------------------------
 # Branding
 # --------------------------------------------------------------------------

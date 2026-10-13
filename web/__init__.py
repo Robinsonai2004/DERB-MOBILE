@@ -37,9 +37,11 @@ def _register_blueprints(app: Flask) -> None:
     from web.letters import bp as letters_bp
     from web.saved import bp as saved_bp
     from web.services import bp as services_bp
+    from web.settings import bp as settings_bp
 
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(services_bp)
+    app.register_blueprint(settings_bp)
     app.register_blueprint(cv_bp)
     app.register_blueprint(letters_bp)
     app.register_blueprint(documents_bp)

@@ -1,0 +1,93 @@
+/*
+  Settings screen - DERB MOBILE.
+  Same design language as the rest of the app: system fonts, no CDN, touch-first.
+  Everything here is plain HTML/CSS state, so the AI switch works with
+  JavaScript disabled (the browser is often an old Android WebView).
+*/
+
+/* Flash messages (cv.css defines these for the CV screens; the Settings screen
+   does not load cv.css, so the same treatment lives here). */
+.flash {
+  margin: 12px 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  background: #ecfdf3;
+  color: #05603a;
+  border: 1px solid #c9ecd8;
+}
+.flash--error { background: #fef3f2; color: #b42318; border-color: #fecdc9; }
+
+/* ------------------------------------------------------- AI switch ------- */
+.ai-toggle { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.switch {
+  display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 240px;
+  cursor: pointer;
+}
+/* The real checkbox stays in the DOM for no-JS submit + accessibility, but the
+   visible control is the track below. */
+.switch input[type="checkbox"] {
+  position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden;
+}
+.switch__track {
+  position: relative; flex: none;
+  width: 52px; height: 30px; border-radius: 999px;
+  background: #cbd5e1; border: 1px solid #b9c3d1;
+  transition: background .16s ease;
+  margin-top: 2px;
+}
+.switch__thumb {
+  position: absolute; top: 2px; left: 2px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(15,37,69,.3);
+  transition: transform .16s ease;
+}
+.switch input:checked + .switch__track { background: #0f766e; border-color: #0f766e; }
+.switch input:checked + .switch__track .switch__thumb { transform: translateX(22px); }
+.switch input:focus-visible + .switch__track { outline: 2px solid #b8860b; outline-offset: 2px; }
+.switch__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.switch__title { font-size: 14.5px; font-weight: 800; color: #0b2545; }
+.switch__hint { font-size: 12.5px; color: #5a6472; line-height: 1.45; }
+
+/* ------------------------------------------------------ honest state ----- */
+.ai-state {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid #e6e9f0;
+}
+.ai-state__message {
+  font-size: 13.5px; color: #1f2430; line-height: 1.5; margin: 0 0 10px;
+}
+.ai-state--enabled .ai-state__message { color: #05603a; font-weight: 600; }
+.ai-state--unavailable .ai-state__message,
+.ai-state--not_configured .ai-state__message { color: #8a5a00; font-weight: 600; }
+.ai-state__note {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 12.5px; color: #33415c; line-height: 1.45;
+  background: #f4f7fb; border-radius: 10px; padding: 10px 12px; margin: 10px 0;
+}
+.ai-state__note--warn { background: #fdf6e3; }
+.ai-state .btn { margin-top: 4px; }
+
+/* ------------------------------------------------ configuration block ---- */
+.ai-config { padding: 0; }
+.ai-config__summary {
+  display: flex; align-items: center; gap: 9px;
+  padding: 13px 14px; cursor: pointer;
+  font-size: 14px; font-weight: 700; color: #123a72;
+}
+.ai-config[open] .ai-config__summary { border-bottom: 1px solid #e6e9f0; }
+.ai-config > p, .ai-config > pre, .ai-config > ul { margin: 12px 14px 0; }
+.ai-config > *:last-child { margin-bottom: 14px; }
+.ai-config__code {
+  background: #0b2545; color: #e6edf7;
+  border-radius: 10px; padding: 12px; overflow-x: auto;
+  font-size: 12px; line-height: 1.5;
+}
+.ai-config__code code { background: none; color: inherit; }
+.ai-config .checklist { margin: 12px 14px 0; grid-template-columns: 1fr; }
+.ai-config .checklist .icon { color: #33415c; }
+code { font-size: .86em; background: #f1f4f9; border-radius: 5px; padding: 1px 5px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch__track, .switch__thumb { transition: none; }
+}

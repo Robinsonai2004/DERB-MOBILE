@@ -58,6 +58,14 @@
       action="{{ url_for('design.generate') }}" id="design-form">
   <input type="hidden" name="category" value="{{ category.slug }}">
   {% if document %}<input type="hidden" name="project_id" value="{{ document.id }}">{% endif %}
+  {# Keep an accepted AI background attached while the operator edits. #}
+  {% if payload.ai.background %}
+  <input type="hidden" name="ai_background" value="{{ payload.ai.background }}">
+  <input type="hidden" name="ai_prompt" value="{{ payload.ai.prompt }}">
+  <input type="hidden" name="ai_provider" value="{{ payload.ai.provider }}">
+  <input type="hidden" name="ai_model" value="{{ payload.ai.model }}">
+  <input type="hidden" name="ai_created_at" value="{{ payload.ai.created_at }}">
+  {% endif %}
 
   <div class="card">
     <label class="field__label" for="title">Customer / Job title</label>
@@ -132,10 +140,63 @@
               placeholder="e.g. Use a Nigerian church anniversary style, make the choir name prominent, gold and white, leave space for three guest photos.">{{ payload.instructions }}</textarea>
   </div>
 
+  {% if ai.usable %}
+  <div class="card ai-panel">
+    <div class="section__head">
+      <h2 class="card__title">Finish with AI
+        {% if ai.state == 'unavailable' %}<span class="pill pill--soon">Last attempt failed</span>
+        {% else %}<span class="pill pill--ready">Enabled</span>{% endif %}
+      </h2>
+    </div>
+    {% if ai.state == 'unavailable' %}
+    <p class="field__hint">{{ ai.message }}
+      <a href="{{ url_for('settings.index') }}">Check the connection in Settings</a>.</p>
+    {% endif %}
+    <p class="field__hint">
+      Describe the improvement you want and DERB will ask the AI provider for a
+      new background, colour treatment and composition. Your names, dates,
+      venues and phone numbers are re-drawn by DERB&rsquo;s own engine, never by
+      the image model.
+    </p>
+    <label class="field__label" for="ai_prompt">What should the AI improve?</label>
+    <textarea class="field__input" id="ai_prompt" name="ai_prompt" rows="3" maxlength="600"
+              placeholder="e.g. Elegant gold and white background, softer lighting, leave the title area clear"></textarea>
+    <p class="field__hint">Needs an internet connection and the API key set in Settings.</p>
+  </div>
+  {% elif ai.enabled %}
+  <section class="section">
+    <div class="notice notice--amber">
+      {{ icon('info', 18, 'notice__icon') }}
+      <p>{{ ai.message }}
+        <a href="{{ url_for('settings.index') }}">Open Settings</a>.</p>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if payload.ai.background %}
+  <section class="section">
+    <div class="notice">
+      {{ icon('check', 18, 'notice__icon') }}
+      <p>This design uses an AI-finished background. Your text and images are
+        unchanged.</p>
+      {% if document %}
+      <button class="btn btn--ghost btn--small" type="submit"
+              formaction="{{ url_for('design.ai_remove', design_id=document.id) }}">Remove AI background</button>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
   <div class="design-bar">
     <button class="btn btn--primary" type="submit">
       {{ icon('design', 18) }} Generate Design
     </button>
+    {% if ai.usable %}
+    <button class="btn btn--ghost" type="submit"
+            formaction="{{ url_for('design.ai_finish') }}">
+      {{ icon('design', 18) }} Generate &amp; Finish with AI
+    </button>
+    {% endif %}
     <button class="btn btn--ghost" type="submit" name="action" value="save"
             formaction="{{ url_for('design.save') }}">
       {{ icon('saved', 18) }} Save

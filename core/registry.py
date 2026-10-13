@@ -117,10 +117,13 @@ SERVICES: tuple[Service, ...] = (
     Service(
         slug="settings",
         title="Settings",
-        subtitle="Business details, storage & defaults",
+        subtitle="AI features, device & defaults",
         icon="settings",
         accent="#475569",
-        phase="Phase 16",
+        status="ready",
+        phase="AI features switch live",
+        endpoint="settings.index",
+        tags=("AI", "Toggle", "Device"),
     ),
     Service(
         slug="official_services",

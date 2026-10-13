@@ -1,0 +1,50 @@
+{# ---------------------------------------------------------------------------
+   One poster, rendered from the engine's element spec.
+
+   Used twice on the result screen while an AI result is being reviewed: once
+   for the AI version and once for the original, so the operator can compare
+   before accepting. Both come from the same engine - the AI one simply has an
+   accepted AI background under it (core/design_render.py).
+--------------------------------------------------------------------------- #}
+{% macro poster(layout, poster_id='design-poster', extra_class='') %}
+<article class="design-poster {{ extra_class }}" id="{{ poster_id }}"
+         data-template="{{ layout.template }}"
+         style="--aspect: {{ layout.aspect }};">
+  {% set W = layout.width %}
+  {% set H = layout.height %}
+  {% for e in layout.elements %}
+    {% set l = '%.4f'|format(e.x / W * 100) %}
+    {% set t = '%.4f'|format(e.y / H * 100) %}
+    {% set w = '%.4f'|format(e.w / W * 100) %}
+    {% set h = '%.4f'|format(e.h / H * 100) %}
+    {% if e.kind == 'rect' %}
+    <div class="dp-el dp-rect" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+      {% if e.fill2 %}background: linear-gradient({{ e.grad_dir or 'to bottom' }}, {{ e.fill }}, {{ e.fill2 }});
+      {% else %}background: {{ e.fill }};
+      {% endif %}
+      {% if e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
+      {% if e.opacity is defined %}opacity: {{ e.opacity }};{% endif %}
+      {% if e.stroke %}border: {{ '%.4f'|format(e.stroke_w / W * 100) }}cqw solid {{ e.stroke }};{% endif %}"></div>
+    {% elif e.kind == 'ellipse' %}
+    <div class="dp-el dp-rect dp-ellipse" style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+      background: {{ e.fill }};{% if e.opacity is defined %} opacity: {{ e.opacity }};{% endif %}"></div>
+    {% elif e.kind == 'photo' %}
+    <div class="dp-el dp-photo{% if e.shape == 'circle' %} dp-photo--circle{% endif %}"
+         style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+         {% if e.shape != 'circle' and e.radius %}border-radius: {{ '%.4f'|format(e.radius / W * 100) }}cqw;{% endif %}
+         {% if e.border %}border: {{ '%.4f'|format(e.border_w / W * 100) }}cqw solid {{ e.border }};{% endif %}">
+      <img src="{{ url_for('design.image', filename=e.file) }}" alt="">
+    </div>
+    {% elif e.kind == 'text' %}
+    <div class="dp-el dp-text"
+         style="left:{{ l }}%;top:{{ t }}%;width:{{ w }}%;height:{{ h }}%;
+         text-align: {{ e.align }};color: {{ e.color }};font-weight: {{ e.weight }};
+         font-size: {{ '%.4f'|format(e.size / W * 100) }}cqw;
+         line-height: {{ '%.4f'|format(e.line_h / e.size) }};
+         {% if e.tracking %}letter-spacing: {{ '%.4f'|format(e.tracking / W * 100) }}cqw;{% endif %}">
+      {% for line in e.lines %}<span class="dp-line">{{ line }}</span>{% endfor %}
+    </div>
+    {% endif %}
+  {% endfor %}
+</article>
+{% endmacro %}

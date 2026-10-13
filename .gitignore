@@ -27,6 +27,13 @@ DERB/Designs/*
 DERB/Templates/*
 !DERB/**/.gitkeep
 
+# Local secrets - never commit an AI provider key (see README)
+.env
+.env.*
+*.env
+# Keep the committed example (no real values) trackable.
+!.env.example
+
 # OS noise
 .DS_Store
 Thumbs.db

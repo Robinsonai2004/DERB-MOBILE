@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% from "partials/icons.html" import icon %}
+
+{% block title %}Settings{% endblock %}
+{% block body_class %}page-settings{% endblock %}
+{% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}?v={{ asset_version }}">
+{% endblock %}
+
+{% block appbar_left %}
+  <a class="appbar__back" href="{{ url_for('dashboard.home') }}" aria-label="Back to dashboard">
+    {{ icon('back', 22) }}
+  </a>
+  <a class="appbar__brand appbar__brand--compact" href="{{ url_for('dashboard.home') }}">
+    <span class="appbar__titles">
+      <span class="appbar__company">{{ brand_company }}</span>
+      <span class="appbar__product">Settings</span>
+    </span>
+  </a>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="flash {% if category == 'error' %}flash--error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<section class="service-hero" style="--tile-accent: {{ service.accent }}">
+  <span class="service-hero__icon">{{ icon('settings', 34) }}</span>
+  <h1 class="service-hero__title">Settings</h1>
+  <p class="service-hero__subtitle">AI features, storage and this device.</p>
+</section>
+
+{# ------------------------------------------------- Switch to AI Features #}
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">Switch to AI Features</h2>
+    {% if status.state == 'enabled' %}
+    <span class="pill pill--ready">Enabled</span>
+    {% elif status.state == 'disabled' %}
+    <span class="pill">Off</span>
+    {% elif status.state == 'not_configured' %}
+    <span class="pill pill--soon">Not configured</span>
+    {% else %}
+    <span class="pill pill--soon">Unavailable</span>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <form class="ai-toggle" method="post" action="{{ url_for('settings.ai_features') }}">
+      <label class="switch">
+        <input type="checkbox" name="ai_features" value="1"
+               {% if status.enabled %}checked{% endif %}>
+        <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+        <span class="switch__body">
+          <span class="switch__title">AI finishing for Graphic Design</span>
+          <span class="switch__hint">
+            Adds a &ldquo;Finish with AI&rdquo; action to the Graphic Design
+            workspace: describe the improvement you want and the AI paints a new
+            background and colour treatment for the customer&rsquo;s design.
+          </span>
+        </span>
+      </label>
+      <button class="btn btn--primary" type="submit">
+        {{ icon('check', 18) }} Save setting
+      </button>
+    </form>
+
+    <div class="ai-state ai-state--{{ status.state }}">
+      <p class="ai-state__message">{{ status.message }}</p>
+      <dl class="kv">
+        <dt>State</dt>
+        <dd>{{ status.state.replace('_', ' ')|capitalize }}</dd>
+        <dt>AI provider</dt>
+        <dd>{% if status.configured %}{{ status.label }}{% else %}Not configured{% endif %}</dd>
+        {% if status.configured %}
+        <dt>Endpoint</dt>
+        <dd>{{ status.base_host }}</dd>
+        <dt>Payment</dt>
+        <dd>Uses the API key configured on this device (charged by your provider)</dd>
+        {% endif %}
+        {% if status.checked_at %}
+        <dt>Last checked</dt>
+        <dd>{{ status.checked_at }}</dd>
+        {% endif %}
+      </dl>
+
+      {% if status.enabled and status.configured %}
+      <p class="ai-state__note">
+        {{ icon('check', 16, 'notice__icon') }}
+        Ready. Open <a href="{{ url_for('design.index') }}">Graphic Design</a> and use
+        <strong>Finish with AI</strong> on any design.
+      </p>
+      {% endif %}
+      {% if status.enabled and not status.configured %}
+      <p class="ai-state__note ai-state__note--warn">
+        {{ icon('info', 16, 'notice__icon') }}
+        Add a provider API key below to make AI finishing actually run. Until then
+        the switch stays on but nothing is sent anywhere.
+      </p>
+      {% endif %}
+
+      {% if status.configured %}
+      <form method="post" action="{{ url_for('settings.ai_check') }}">
+        <button class="btn btn--ghost" type="submit">
+          {{ icon('design', 16) }} Check AI connection
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{# -------------------------------------------------------- configuration #}
+<section class="section">
+  <details class="card ai-config">
+    <summary class="ai-config__summary">
+      {{ icon('info', 18, 'notice__icon') }}
+      <span>How to connect an AI provider</span>
+    </summary>
+    <p class="field__hint">
+      No AI provider is connected out of the box, and DERB never pretends one is.
+      The key is read on the server from the environment &mdash; it is never
+      written into the database, the pages, the logs or a git commit.
+    </p>
+    <p class="field__hint">
+      <strong>Easiest and most private:</strong> run
+      <code>bash scripts/set_ai_key.sh</code> from the project folder. It asks
+      for the key with a hidden prompt (so it never reaches your shell history),
+      saves it to <code>.env.local</code> with permissions <code>600</code>, and
+      refuses to write unless git ignores that file. On startup DERB prints only
+      the <em>names</em> of the settings it loaded, never a value. A real
+      environment variable still wins over the file, and only
+      <code>DERB_*</code> keys are read.
+    </p>
+    <p class="field__hint">
+      <strong>Option 1 &mdash; Google Gemini</strong> (recommended on this
+      device): one key from Google AI Studio, and the same call handles plain
+      text-to-image and the customer&rsquo;s own photos.
+    </p>
+    <pre class="ai-config__code"><code># On this phone, before starting DERB MOBILE:
+export DERB_AI_PROVIDER=gemini
+export DERB_AI_API_KEY=your-gemini-api-key
+# optional overrides:
+export DERB_AI_IMAGE_MODEL=gemini-2.5-flash-image
+export DERB_AI_TIMEOUT=90            # seconds
+python app.py</code></pre>
+    <p class="field__hint">
+      <strong>Option 2 &mdash; any OpenAI Images API gateway</strong> (the
+      default):
+    </p>
+    <pre class="ai-config__code"><code>export DERB_AI_PROVIDER=openai-images   # default, may be omitted
+export DERB_AI_API_KEY=your-provider-api-key
+export DERB_AI_BASE_URL=https://api.openai.com/v1
+export DERB_AI_IMAGE_MODEL=gpt-image-1
+export DERB_AI_QUALITY=high          # low | medium | high | auto
+export DERB_AI_TIMEOUT=90            # seconds
+python app.py</code></pre>
+    <ul class="checklist">
+      {% for key in ai_env_keys %}
+      <li><code>{{ key }}</code></li>
+      {% endfor %}
+    </ul>
+    <p class="field__hint">
+      <code>DERB_AI_PROVIDER</code> chooses the client: <code>gemini</code>
+      speaks the Gemini API directly (key in the <code>x-goog-api-key</code>
+      header), while <code>openai-images</code> speaks the documented OpenAI
+      Images API (<code>/images/generations</code> and
+      <code>/images/edits</code>) so any OpenAI-compatible gateway works by
+      changing <code>DERB_AI_BASE_URL</code>. Either way only the standard
+      library is used &mdash; no SDK is installed. Turn the switch on above and
+      use <strong>Check AI connection</strong> to prove the key works before
+      generating a paid image.
+    </p>
+    <p class="field__hint">
+      <strong>Your text is never left to the image model.</strong> The AI only
+      paints a background; every name, date, venue, phone number and logo is
+      re-drawn by the built-in DERB layout engine, so nothing can be silently
+      changed or dropped.
+    </p>
+  </details>
+</section>
+
+{# ------------------------------------------------------------ this device #}
+<section class="section">
+  <div class="section__head"><h2 class="section__title">This device</h2></div>
+  <div class="card">
+    <dl class="kv">
+      <dt>App version</dt>
+      <dd>{{ brand_product }} v{{ brand_version }}</dd>
+      <dt>Documents folder</dt>
+      <dd>{{ documents_root }}</dd>
+      <dt>Database</dt>
+      <dd>{{ db_path }}</dd>
+      <dt>Connection</dt>
+      <dd>Works offline; only AI finishing needs internet</dd>
+    </dl>
+  </div>
+</section>
+
+<div class="actions">
+  <a class="btn btn--ghost" href="{{ url_for('dashboard.home') }}">Back to Dashboard</a>
+</div>
+{% endblock %}
